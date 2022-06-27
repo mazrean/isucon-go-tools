@@ -59,3 +59,54 @@ func (p *Pool[T, _]) Put(t T) {
 
 	p.pool.Put(t)
 }
+
+type SlicePool[T ~*[]S, S any] struct {
+	pool    *sync.Pool
+	name    string
+	counter *prometheus.CounterVec
+}
+
+func NewSlice[T ~*[]S, S any](name string, fn func() T) *SlicePool[T, S] {
+	var counter *prometheus.CounterVec
+	if isutools.Enable {
+		counter = promauto.NewCounterVec(prometheus.CounterOpts{
+			Namespace: prometheusNamespace,
+			Subsystem: prometheusSubsystem,
+			Name:      "count",
+		}, []string{"name", "type"})
+	}
+
+	return &SlicePool[T, S]{
+		pool: &sync.Pool{
+			New: func() interface{} {
+				if counter != nil {
+					counter.WithLabelValues(name, "alloc").Inc()
+				}
+
+				return fn()
+			},
+		},
+		name:    name,
+		counter: counter,
+	}
+}
+
+func (p *SlicePool[T, _]) Get() T {
+	if p.counter != nil {
+		p.counter.WithLabelValues(p.name, "get").Inc()
+	}
+
+	// capはそのままで、lenを0にして、データを消去する
+	v := p.pool.Get().(T)
+	*v = (*v)[:0]
+
+	return v
+}
+
+func (p *SlicePool[T, _]) Put(t T) {
+	if p.counter != nil {
+		p.counter.WithLabelValues(p.name, "put").Inc()
+	}
+
+	p.pool.Put(t)
+}
