@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	enable = true
+	Enable = true
 )
 
 /*
@@ -18,12 +18,12 @@ var (
 func init() {
 	strEnable, ok := os.LookupEnv("ISUTOOLS_ENABLE")
 	if ok {
-		subEnable, err := strconv.ParseBool(strings.TrimSpace(strEnable))
+		enable, err := strconv.ParseBool(strings.TrimSpace(strEnable))
 		if err != nil {
 			log.Printf("failed to parse ISUTOOLS_ENABLE: %v", err)
 			return
 		}
 
-		enable = subEnable
+		Enable = enable
 	}
 }

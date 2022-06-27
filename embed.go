@@ -12,7 +12,7 @@ import (
 
 // pprofとprometheusの設定
 func init() {
-	if !enable {
+	if !Enable {
 		return
 	}
 
