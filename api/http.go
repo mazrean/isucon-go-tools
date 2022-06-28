@@ -69,7 +69,7 @@ func (s *Server) ListenAndServeTLS(certFile, keyFile string) error {
 }
 
 func listen(addr string) (net.Listener, error) {
-	listener, ok, err := initUnixDomainSock()
+	listener, ok, err := unixDomainSock()
 	if err != nil {
 		return nil, err
 	}
@@ -79,27 +79,9 @@ func listen(addr string) (net.Listener, error) {
 			addr = ":http"
 		}
 
-		listener, err = net.Listen("tcp", addr)
+		listener, err = tcpListener(addr)
 		if err != nil {
-			return nil, err
-		}
-
-		tcpConn, err := listener.(*net.TCPListener).AcceptTCP()
-		if err != nil {
-			listener.Close()
-			return nil, fmt.Errorf("failed to accept TCP connection: %s", err)
-		}
-
-		err = tcpConn.SetKeepAlive(true)
-		if err != nil {
-			listener.Close()
-			return nil, fmt.Errorf("failed to set keep alive: %s", err)
-		}
-
-		err = tcpConn.SetKeepAlivePeriod(3 * time.Minute)
-		if err != nil {
-			listener.Close()
-			return nil, fmt.Errorf("failed to set keep alive period: %s", err)
+			return nil, fmt.Errorf("failed to listen on %s: %w", addr, err)
 		}
 	}
 

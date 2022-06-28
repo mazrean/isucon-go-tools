@@ -40,7 +40,7 @@ func EchoSetting(e *echo.Echo) {
 		e.JSONSerializer = JSONSerializer{}
 	}
 
-	listener, ok, err := initUnixDomainSock()
+	listener, ok, err := unixDomainSock()
 	if err != nil {
 		log.Printf("failed to init unix domain socket: %s\n", err)
 	}
