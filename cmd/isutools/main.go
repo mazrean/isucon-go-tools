@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/mazrean/isucon-go-tools/analysers/echo"
 	"github.com/mazrean/isucon-go-tools/analysers/embed"
 	"golang.org/x/tools/go/analysis/multichecker"
 )
@@ -8,5 +9,6 @@ import (
 func main() {
 	multichecker.Main(
 		embed.Analyzer,
+		echo.Analyzer,
 	)
 }
