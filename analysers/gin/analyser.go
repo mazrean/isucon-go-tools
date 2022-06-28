@@ -24,8 +24,8 @@ var (
 )
 
 var Analyzer = &analysis.Analyzer{
-	Name: "echo",
-	Doc:  "automatically setup github.com/labstack/echo/v4 package",
+	Name: "gin",
+	Doc:  "automatically setup github.com/gin-gonic/gin package",
 	Run:  run,
 	Requires: []*analysis.Analyzer{
 		buildssa.Analyzer,
