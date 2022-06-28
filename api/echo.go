@@ -33,7 +33,7 @@ func init() {
 	enableGoJson = subEnableGoJson
 }
 
-func EchoSetting(e *echo.Echo) {
+func EchoSetting(e *echo.Echo) *echo.Echo {
 	e.Pre(EchoMetricsMiddleware)
 
 	if enableGoJson {
@@ -48,6 +48,8 @@ func EchoSetting(e *echo.Echo) {
 	if ok {
 		e.Listener = listener
 	}
+
+	return e
 }
 
 type JSONSerializer struct{}
