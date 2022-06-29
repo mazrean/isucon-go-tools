@@ -13,83 +13,92 @@ const (
 	prometheusSubsystem = "db"
 )
 
-func InitDBMetrics(db interface {
+func DBMetricsSetup[T interface {
 	Stats() sql.DBStats
-}) {
-	if isutools.Enable {
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "max_open_connections",
-		}, func() float64 {
-			return float64(db.Stats().OpenConnections)
-		})
+}](fn func(string, string) (T, error)) func(string, string) (T, error) {
+	return func(driverName string, dataSourceName string) (T, error) {
+		db, err := fn(driverName, dataSourceName)
+		if err != nil {
+			return db, err
+		}
 
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "connection_pool",
-			ConstLabels: map[string]string{
-				"status": "idle",
-			},
-		}, func() float64 {
-			return float64(db.Stats().Idle)
-		})
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "connection_pool",
-			ConstLabels: map[string]string{
-				"status": "open",
-			},
-		}, func() float64 {
-			return float64(db.Stats().OpenConnections)
-		})
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "connection_pool",
-			ConstLabels: map[string]string{
-				"status": "in_use",
-			},
-		}, func() float64 {
-			return float64(db.Stats().InUse)
-		})
+		if isutools.Enable {
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "max_open_connections",
+			}, func() float64 {
+				return float64(db.Stats().OpenConnections)
+			})
 
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "wait_count",
-		}, func() float64 {
-			return float64(db.Stats().WaitCount)
-		})
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "wait_duration",
-		}, func() float64 {
-			return float64(db.Stats().WaitDuration)
-		})
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "max_idle_closed",
-		}, func() float64 {
-			return float64(db.Stats().MaxOpenConnections)
-		})
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "max_lifetime_closed",
-		}, func() float64 {
-			return float64(db.Stats().MaxLifetimeClosed)
-		})
-		promauto.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: prometheusNamespace,
-			Subsystem: prometheusSubsystem,
-			Name:      "max_idle_time_closed",
-		}, func() float64 {
-			return float64(db.Stats().MaxIdleTimeClosed)
-		})
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "connection_pool",
+				ConstLabels: map[string]string{
+					"status": "idle",
+				},
+			}, func() float64 {
+				return float64(db.Stats().Idle)
+			})
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "connection_pool",
+				ConstLabels: map[string]string{
+					"status": "open",
+				},
+			}, func() float64 {
+				return float64(db.Stats().OpenConnections)
+			})
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "connection_pool",
+				ConstLabels: map[string]string{
+					"status": "in_use",
+				},
+			}, func() float64 {
+				return float64(db.Stats().InUse)
+			})
+
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "wait_count",
+			}, func() float64 {
+				return float64(db.Stats().WaitCount)
+			})
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "wait_duration",
+			}, func() float64 {
+				return float64(db.Stats().WaitDuration)
+			})
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "max_idle_closed",
+			}, func() float64 {
+				return float64(db.Stats().MaxOpenConnections)
+			})
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "max_lifetime_closed",
+			}, func() float64 {
+				return float64(db.Stats().MaxLifetimeClosed)
+			})
+			promauto.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: prometheusNamespace,
+				Subsystem: prometheusSubsystem,
+				Name:      "max_idle_time_closed",
+			}, func() float64 {
+				return float64(db.Stats().MaxIdleTimeClosed)
+			})
+		}
+
+		return db, err
 	}
 }
