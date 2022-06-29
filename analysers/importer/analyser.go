@@ -13,6 +13,7 @@ import (
 	"github.com/mazrean/isucon-go-tools/analysers/echo"
 	"github.com/mazrean/isucon-go-tools/analysers/embed"
 	"github.com/mazrean/isucon-go-tools/analysers/gin"
+	"github.com/mazrean/isucon-go-tools/analysers/http"
 	"github.com/mazrean/isucon-go-tools/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
 )
@@ -22,6 +23,7 @@ var (
 		embed.Analyzer,
 		echo.Analyzer,
 		gin.Analyzer,
+		http.Analyzer,
 	}
 )
 

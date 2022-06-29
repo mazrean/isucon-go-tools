@@ -103,6 +103,10 @@ type visitor struct {
 }
 
 func (v *visitor) Visit(node ast.Node) ast.Visitor {
+	if node == nil {
+		return nil
+	}
+
 	switch expr := node.(type) {
 	case *ast.CallExpr:
 		calleeSelector, ok := expr.Fun.(*ast.SelectorExpr)
