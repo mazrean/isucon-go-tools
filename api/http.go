@@ -36,36 +36,30 @@ func ListenAndServeTLS(addr, certFile, keyFile string, handler http.Handler) err
 	return http.ServeTLS(listener, handler, certFile, keyFile)
 }
 
-type Server struct {
-	*http.Server
-}
-
-func WrapServer(server *http.Server) *Server {
+func ServerListenAndServe(server *http.Server) error {
 	if isutools.Enable {
 		server.Handler = StdMetricsMiddleware(server.Handler)
 	}
 
-	return &Server{
-		Server: server,
-	}
-}
-
-func (s *Server) ListenAndServe() error {
-	listener, err := listen(s.Addr)
+	listener, err := listen(server.Addr)
 	if err != nil {
 		return err
 	}
 
-	return s.Serve(listener)
+	return server.Serve(listener)
 }
 
-func (s *Server) ListenAndServeTLS(certFile, keyFile string) error {
-	listener, err := listen(s.Addr)
+func ServerListenAndServeTLS(server *http.Server, certFile, keyFile string) error {
+	if isutools.Enable {
+		server.Handler = StdMetricsMiddleware(server.Handler)
+	}
+
+	listener, err := listen(server.Addr)
 	if err != nil {
 		return err
 	}
 
-	return s.ServeTLS(listener, certFile, keyFile)
+	return server.ServeTLS(listener, certFile, keyFile)
 }
 
 func listen(addr string) (net.Listener, error) {
