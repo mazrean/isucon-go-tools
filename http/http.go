@@ -63,7 +63,7 @@ func ServerListenAndServeTLS(server *http.Server, certFile, keyFile string) erro
 }
 
 func listen(addr string) (net.Listener, error) {
-	listener, ok, err := unixDomainSock()
+	listener, ok, err := newUnixDomainSockListener()
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func listen(addr string) (net.Listener, error) {
 			addr = ":http"
 		}
 
-		listener, err = tcpListener(addr)
+		listener, err = newTCPListener(addr)
 		if err != nil {
 			return nil, fmt.Errorf("failed to listen on %s: %w", addr, err)
 		}
