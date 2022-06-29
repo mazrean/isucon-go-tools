@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/mazrean/isucon-go-tools/analysers/cache"
 	"github.com/mazrean/isucon-go-tools/analysers/db"
 	"github.com/mazrean/isucon-go-tools/analysers/echo"
 	"github.com/mazrean/isucon-go-tools/analysers/embed"
@@ -17,6 +18,7 @@ func main() {
 		gin.Analyzer,
 		http.Analyzer,
 		db.Analyzer,
+		cache.Analyzer,
 		importer.Analyzer,
 	)
 }
