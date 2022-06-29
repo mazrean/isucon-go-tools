@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gostaticanalysis/analysisutil"
+	"github.com/mazrean/isucon-go-tools/analysers/db"
 	"github.com/mazrean/isucon-go-tools/analysers/echo"
 	"github.com/mazrean/isucon-go-tools/analysers/embed"
 	"github.com/mazrean/isucon-go-tools/analysers/gin"
@@ -24,6 +25,7 @@ var (
 		echo.Analyzer,
 		gin.Analyzer,
 		http.Analyzer,
+		db.Analyzer,
 	}
 )
 
