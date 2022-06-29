@@ -45,7 +45,13 @@ func run(pass *analysis.Pass) (any, error) {
 	for f, requiredPkgs := range requiredPkgMap {
 		missingPkgs := []*suggest.ImportInfo{}
 		pkgMap := makePackageMap(f)
+		dupDetecter := map[string]struct{}{}
 		for _, pkg := range requiredPkgs {
+			if _, ok := dupDetecter[pkg.Path]; ok {
+				continue
+			}
+			dupDetecter[pkg.Path] = struct{}{}
+
 			if _, ok := pkgMap[analysisutil.RemoveVendor(pkg.Path)]; !ok {
 				missingPkgs = append(missingPkgs, pkg)
 			}
