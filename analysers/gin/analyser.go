@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
+	"reflect"
 
 	"github.com/gostaticanalysis/analysisutil"
 	"github.com/mazrean/isucon-go-tools/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/passes/buildssa"
 )
 
 const (
@@ -21,16 +21,15 @@ const (
 
 var (
 	ginFuncNames = []string{"New", "Default"}
-)
 
-var Analyzer = &analysis.Analyzer{
-	Name: "gin",
-	Doc:  "automatically setup github.com/gin-gonic/gin package",
-	Run:  run,
-	Requires: []*analysis.Analyzer{
-		buildssa.Analyzer,
-	},
-}
+	importPkgs []*suggest.ImportInfo
+	Analyzer   = &analysis.Analyzer{
+		Name:       "gin",
+		Doc:        "automatically setup github.com/gin-gonic/gin package",
+		Run:        run,
+		ResultType: reflect.TypeOf(importPkgs),
+	}
+)
 
 func run(pass *analysis.Pass) (any, error) {
 	var pkgIdent string
@@ -41,7 +40,7 @@ func run(pass *analysis.Pass) (any, error) {
 		}
 	}
 	if len(pkgIdent) == 0 {
-		return nil, nil
+		return importPkgs, nil
 	}
 
 	callExprs := []*ast.CallExpr{}
@@ -54,17 +53,17 @@ func run(pass *analysis.Pass) (any, error) {
 		ast.Walk(&v, f)
 
 		if len(v.callExprs) != 0 {
-			err := suggest.ImportPackage(pass, f, "", apiPkgName)
-			if err != nil {
-				return nil, fmt.Errorf("failed to import %s package: %w", apiPkgName, err)
-			}
+			importPkgs = append(importPkgs, &suggest.ImportInfo{
+				File: f,
+				Path: apiPkgName,
+			})
 
 			callExprs = append(callExprs, v.callExprs...)
 		}
 	}
 
 	if len(callExprs) == 0 {
-		return nil, nil
+		return importPkgs, nil
 	}
 
 	for _, callExpr := range callExprs {
@@ -95,7 +94,7 @@ func run(pass *analysis.Pass) (any, error) {
 		})
 	}
 
-	return nil, nil
+	return importPkgs, nil
 }
 
 type visitor struct {

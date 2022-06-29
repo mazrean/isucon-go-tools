@@ -1,7 +1,7 @@
 package embed
 
 import (
-	"fmt"
+	"reflect"
 
 	"github.com/mazrean/isucon-go-tools/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
@@ -11,11 +11,15 @@ const (
 	pkgName = "github.com/mazrean/isucon-go-tools"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name: "embed",
-	Doc:  "import github.com/mazrean/isucon-go-tools package",
-	Run:  run,
-}
+var (
+	importPkgs []*suggest.ImportInfo
+	Analyzer   = &analysis.Analyzer{
+		Name:       "embed",
+		Doc:        "import github.com/mazrean/isucon-go-tools package",
+		Run:        run,
+		ResultType: reflect.TypeOf([]*suggest.ImportInfo{}),
+	}
+)
 
 func run(pass *analysis.Pass) (any, error) {
 	mainFile, ok := suggest.FindMainFile(pass)
@@ -23,10 +27,9 @@ func run(pass *analysis.Pass) (any, error) {
 		return nil, nil
 	}
 
-	err := suggest.ImportPackage(pass, mainFile, "_", pkgName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to import %s package: %w", pkgName, err)
-	}
-
-	return nil, nil
+	return append(importPkgs, &suggest.ImportInfo{
+		File:  mainFile,
+		Ident: "_",
+		Path:  pkgName,
+	}), nil
 }
