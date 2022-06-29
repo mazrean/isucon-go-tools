@@ -2,25 +2,29 @@ package gin
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
+	"go/types"
 	"reflect"
 
 	"github.com/gostaticanalysis/analysisutil"
 	"github.com/mazrean/isucon-go-tools/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
+	"golang.org/x/tools/go/analysis/passes/buildssa"
 )
 
 const (
 	ginPkgName         = "github.com/gin-gonic/gin"
+	ginEnginTypeName   = "Engine"
 	apiPkgName         = "github.com/mazrean/isucon-go-tools/api"
 	apiPkgDefaultIdent = "api"
-	apiFuncName        = "WrapGin"
+	apiPrefix          = "Gin"
 )
 
 var (
-	ginFuncNames = []string{"New", "Default"}
+	ginMethodNames = []string{"Run", "RunTLS"}
 
 	importPkgs []*suggest.ImportInfo
 	Analyzer   = &analysis.Analyzer{
@@ -28,107 +32,79 @@ var (
 		Doc:        "automatically setup github.com/gin-gonic/gin package",
 		Run:        run,
 		ResultType: reflect.TypeOf(importPkgs),
+		Requires:   []*analysis.Analyzer{buildssa.Analyzer},
 	}
 )
 
 func run(pass *analysis.Pass) (any, error) {
-	var pkgIdent string
-	for _, pkg := range pass.Pkg.Imports() {
-		if analysisutil.RemoveVendor(pkg.Path()) == ginPkgName {
-			pkgIdent = pkg.Name()
-			break
-		}
+	ssaGraph, ok := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
+	if !ok {
+		return nil, errors.New("failed to get ssa graph")
 	}
-	if len(pkgIdent) == 0 {
+
+	enginType := analysisutil.TypeOf(pass, ginPkgName, ginEnginTypeName)
+	if enginType == nil {
 		return importPkgs, nil
 	}
 
-	callExprs := []*ast.CallExpr{}
-	for _, f := range pass.Files {
-		v := visitor{
-			pkgIdent:  pkgIdent,
-			funcNames: ginFuncNames,
+	funcTypes := make([]*types.Func, 0, len(ginMethodNames))
+	for _, methodName := range ginMethodNames {
+		funcType := analysisutil.MethodOf(enginType, methodName)
+		if funcType == nil {
+			continue
 		}
 
-		ast.Walk(&v, f)
+		funcTypes = append(funcTypes, funcType)
+	}
 
-		if len(v.callExprs) != 0 {
-			importPkgs = append(importPkgs, &suggest.ImportInfo{
-				File: f,
-				Path: apiPkgName,
-			})
+	callExprInfo, err := suggest.FindCallExpr(pass.Files, ssaGraph, funcTypes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find call expr: %w", err)
+	}
 
-			callExprs = append(callExprs, v.callExprs...)
+	buf := bytes.Buffer{}
+
+	for _, callExpr := range callExprInfo {
+		importPkgs = append(importPkgs, &suggest.ImportInfo{
+			File: callExpr.File,
+			Path: apiPkgName,
+		})
+
+		selectorExpr, ok := callExpr.Call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			continue
 		}
-	}
 
-	if len(callExprs) == 0 {
-		return importPkgs, nil
-	}
-
-	for _, callExpr := range callExprs {
-		buf := bytes.Buffer{}
+		args := make([]ast.Expr, 0, len(callExpr.Call.Args)+1)
+		args = append(args, selectorExpr.X)
+		args = append(args, callExpr.Call.Args...)
 
 		err := format.Node(&buf, pass.Fset, &ast.CallExpr{
 			Fun: &ast.SelectorExpr{
 				X:   ast.NewIdent(apiPkgDefaultIdent),
-				Sel: ast.NewIdent(apiFuncName),
+				Sel: ast.NewIdent(apiPrefix + callExpr.FuncType.Name()),
 			},
-			Args: []ast.Expr{callExpr},
+			Args: args,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to format import declaration: %w", err)
 		}
 
 		pass.Report(analysis.Diagnostic{
-			Pos:     callExpr.Pos(),
-			Message: fmt.Sprintf("should wrap *(%s).%s with (%s).%s", ginPkgName, "Engin", apiPkgName, apiFuncName),
+			Pos:     callExpr.Call.Pos(),
+			Message: fmt.Sprintf("should replace %s with (%s).%s%s", callExpr.FuncType.FullName(), apiPkgName, apiPrefix, callExpr.FuncType.Name()),
 			SuggestedFixes: []analysis.SuggestedFix{{
-				Message: fmt.Sprintf("wrap *(%s).%s with (%s).%s", ginPkgName, "Engin", apiPkgName, apiFuncName),
+				Message: fmt.Sprintf("replace %s with (%s).%s%s", callExpr.FuncType.FullName(), apiPkgName, apiPrefix, callExpr.FuncType.Name()),
 				TextEdits: []analysis.TextEdit{{
-					Pos:     callExpr.Pos(),
-					End:     callExpr.End(),
+					Pos:     callExpr.Call.Pos(),
+					End:     callExpr.Call.End(),
 					NewText: buf.Bytes(),
 				}},
 			}},
 		})
+
+		buf.Reset()
 	}
 
 	return importPkgs, nil
-}
-
-type visitor struct {
-	pkgIdent  string
-	funcNames []string
-	callExprs []*ast.CallExpr
-}
-
-func (v *visitor) Visit(node ast.Node) ast.Visitor {
-	switch expr := node.(type) {
-	case *ast.CallExpr:
-		calleeSelector, ok := expr.Fun.(*ast.SelectorExpr)
-		if !ok {
-			return v
-		}
-
-		selName, ok := calleeSelector.X.(*ast.Ident)
-		if !ok {
-			return v
-		}
-
-		if selName.Name != v.pkgIdent {
-			return v
-		}
-
-		for _, funcName := range v.funcNames {
-			if calleeSelector.Sel.Name == funcName {
-				v.callExprs = append(v.callExprs, expr)
-				break
-			}
-		}
-
-		return v
-	}
-
-	return v
 }
