@@ -53,8 +53,9 @@ func run(pass *analysis.Pass) (any, error) {
 
 		if len(v.callExprs) != 0 {
 			importPkgs = append(importPkgs, &suggest.ImportInfo{
-				File: f,
-				Path: apiPkgName,
+				File:  f,
+				Ident: apiPkgDefaultIdent,
+				Path:  apiPkgName,
 			})
 
 			callExprs = append(callExprs, v.callExprs...)

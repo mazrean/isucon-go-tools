@@ -66,8 +66,9 @@ func run(pass *analysis.Pass) (any, error) {
 
 	for _, callExpr := range callExprInfo {
 		importPkgs = append(importPkgs, &suggest.ImportInfo{
-			File: callExpr.File,
-			Path: apiPkgName,
+			File:  callExpr.File,
+			Ident: apiPkgDefaultIdent,
+			Path:  apiPkgName,
 		})
 
 		selectorExpr, ok := callExpr.Call.Fun.(*ast.SelectorExpr)
