@@ -16,7 +16,7 @@ const (
 	sqlPkgName        = "database/sql"
 	sqlxPkgName       = "github.com/jmoiron/sqlx"
 	dbPkgName         = "github.com/mazrean/isucon-go-tools/db"
-	dbPkgDefaultIdent = "db"
+	dbPkgDefaultIdent = "isudb"
 	dbFuncName        = "DBMetricsSetup"
 )
 

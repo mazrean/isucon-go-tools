@@ -18,8 +18,8 @@ import (
 const (
 	httpPkgName        = "net/http"
 	httpServerTypeName = "Server"
-	apiPkgName         = "github.com/mazrean/isucon-go-tools/api"
-	apiPkgDefaultIdent = "api"
+	apiPkgName         = "github.com/mazrean/isucon-go-tools/http"
+	apiPkgDefaultIdent = "isuhttp"
 	apiPrefix          = "Server"
 )
 

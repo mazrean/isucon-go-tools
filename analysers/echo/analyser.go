@@ -15,8 +15,8 @@ import (
 const (
 	echoPkgName        = "github.com/labstack/echo/v4"
 	echoFuncName       = "New"
-	apiPkgName         = "github.com/mazrean/isucon-go-tools/api"
-	apiPkgDefaultIdent = "api"
+	apiPkgName         = "github.com/mazrean/isucon-go-tools/http"
+	apiPkgDefaultIdent = "isuhttp"
 	apiFuncName        = "EchoSetting"
 )
 

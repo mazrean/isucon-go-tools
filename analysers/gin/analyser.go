@@ -18,8 +18,8 @@ import (
 const (
 	ginPkgName         = "github.com/gin-gonic/gin"
 	ginEnginTypeName   = "Engine"
-	apiPkgName         = "github.com/mazrean/isucon-go-tools/api"
-	apiPkgDefaultIdent = "api"
+	apiPkgName         = "github.com/mazrean/isucon-go-tools/http"
+	apiPkgDefaultIdent = "isuhttp"
 	apiPrefix          = "Gin"
 )
 

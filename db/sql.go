@@ -1,4 +1,4 @@
-package db
+package isudb
 
 import (
 	"database/sql"
