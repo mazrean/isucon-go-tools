@@ -17,14 +17,14 @@ var (
 		Name:       "embed",
 		Doc:        "import github.com/mazrean/isucon-go-tools package",
 		Run:        run,
-		ResultType: reflect.TypeOf([]*suggest.ImportInfo{}),
+		ResultType: reflect.TypeOf(importPkgs),
 	}
 )
 
 func run(pass *analysis.Pass) (any, error) {
 	mainFile, ok := suggest.FindMainFile(pass)
 	if !ok {
-		return nil, nil
+		return importPkgs, nil
 	}
 
 	return append(importPkgs, &suggest.ImportInfo{
