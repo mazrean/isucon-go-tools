@@ -6,23 +6,37 @@ import (
 	"os"
 )
 
-func newUnixDomainSockListener() (net.Listener, bool, error) {
+var (
+	unixDomainSockPath = ""
+)
+
+func init() {
 	sockPath, ok := os.LookupEnv("UNIX_SOCKET")
-	if !ok {
+	if ok {
+		unixDomainSockPath = sockPath
+	}
+}
+
+func SetUnix(path string) {
+	unixDomainSockPath = path
+}
+
+func newUnixDomainSockListener() (net.Listener, bool, error) {
+	if len(unixDomainSockPath) == 0 {
 		return nil, false, nil
 	}
 
-	err := os.Remove(sockPath)
+	err := os.Remove(unixDomainSockPath)
 	if err != nil && !os.IsNotExist(err) {
 		return nil, false, fmt.Errorf("failed to remove socket file: %w", err)
 	}
 
-	listener, err := net.Listen("unix", sockPath)
+	listener, err := net.Listen("unix", unixDomainSockPath)
 	if err != nil {
 		return nil, false, fmt.Errorf("unix domain sock listen error: %w", err)
 	}
 
-	err = os.Chmod(sockPath, 0777)
+	err = os.Chmod(unixDomainSockPath, 0777)
 	if err != nil {
 		listener.Close()
 		return nil, false, fmt.Errorf("unix domain sock chmod error: %w", err)
