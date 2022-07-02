@@ -118,6 +118,7 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 		wrappedRes := newResponseWriterWithMetrics(res)
 
 		path := req.URL.Path
+		host := req.Host
 		method := req.Method
 
 		reqSz := reqSize(req)
@@ -134,7 +135,7 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 
 		reqSizeHistogramVec.WithLabelValues(statusCode, method, path).Observe(reqSz)
 		reqDurHistogramVec.WithLabelValues(statusCode, method, path).Observe(reqDur)
-		reqCounterVec.WithLabelValues(statusCode, method, path).Inc()
+		reqCounterVec.WithLabelValues(statusCode, method, host, path).Inc()
 		resSizeHistogramVec.WithLabelValues(statusCode, method, path).Observe(wrappedRes.resSize)
 	})
 }

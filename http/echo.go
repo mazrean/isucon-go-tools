@@ -79,6 +79,7 @@ func EchoMetricsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		path := c.Path()
+		host := c.Request().Host
 		method := c.Request().Method
 
 		reqSz := reqSize(c.Request())
@@ -119,7 +120,7 @@ func EchoMetricsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		reqSizeHistogramVec.WithLabelValues(strStatusCode, method, path).Observe(reqSz)
 		reqDurHistogramVec.WithLabelValues(strStatusCode, method, path).Observe(reqDur)
-		reqCounterVec.WithLabelValues(strStatusCode, method, path).Inc()
+		reqCounterVec.WithLabelValues(strStatusCode, method, host, path).Inc()
 
 		if validResSize {
 			resSizeHistogramVec.WithLabelValues(strStatusCode, method, path).Observe(resSize)
