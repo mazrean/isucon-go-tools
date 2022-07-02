@@ -120,6 +120,10 @@ func (v *visitor) Visit(node ast.Node) ast.Visitor {
 			return v
 		}
 
+		if selName.Name == apiPkgDefaultIdent && calleeSelector.Sel.Name == apiFuncName {
+			return nil
+		}
+
 		if selName.Name != v.pkgIdent {
 			return v
 		}
