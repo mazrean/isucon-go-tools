@@ -34,7 +34,7 @@ func init() {
 }
 
 func EchoSetting(e *echo.Echo) *echo.Echo {
-	e.Pre(EchoMetricsMiddleware)
+	e.Use(EchoMetricsMiddleware)
 
 	if enableGoJson {
 		e.JSONSerializer = JSONSerializer{}
