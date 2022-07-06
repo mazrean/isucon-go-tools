@@ -53,6 +53,7 @@ func DBMetricsSetup[T interface {
 	Stats() sql.DBStats
 }](fn func(string, string) (T, error)) func(string, string) (T, error) {
 	return func(driverName string, dataSourceName string) (T, error) {
+		var addr string
 		if fixInterpolateParams && driverName == "mysql" {
 			config, err := mysql.ParseDSN(dataSourceName)
 			if err != nil {
@@ -64,6 +65,8 @@ func DBMetricsSetup[T interface {
 				config.InterpolateParams = true
 				dataSourceName = config.FormatDSN()
 			}
+
+			addr = config.Addr
 		}
 
 	CONNECT:
@@ -109,6 +112,9 @@ func DBMetricsSetup[T interface {
 				Namespace: prometheusNamespace,
 				Subsystem: prometheusSubsystem,
 				Name:      "max_open_connections",
+				ConstLabels: map[string]string{
+					"addr": addr,
+				},
 			}, func() float64 {
 				return float64(db.Stats().OpenConnections)
 			})
@@ -119,6 +125,7 @@ func DBMetricsSetup[T interface {
 				Name:      "connection_pool",
 				ConstLabels: map[string]string{
 					"status": "idle",
+					"addr":   addr,
 				},
 			}, func() float64 {
 				return float64(db.Stats().Idle)
@@ -129,6 +136,7 @@ func DBMetricsSetup[T interface {
 				Name:      "connection_pool",
 				ConstLabels: map[string]string{
 					"status": "open",
+					"addr":   addr,
 				},
 			}, func() float64 {
 				return float64(db.Stats().OpenConnections)
@@ -139,6 +147,7 @@ func DBMetricsSetup[T interface {
 				Name:      "connection_pool",
 				ConstLabels: map[string]string{
 					"status": "in_use",
+					"addr":   addr,
 				},
 			}, func() float64 {
 				return float64(db.Stats().InUse)
@@ -148,6 +157,9 @@ func DBMetricsSetup[T interface {
 				Namespace: prometheusNamespace,
 				Subsystem: prometheusSubsystem,
 				Name:      "wait_count",
+				ConstLabels: map[string]string{
+					"addr": addr,
+				},
 			}, func() float64 {
 				return float64(db.Stats().WaitCount)
 			})
@@ -155,6 +167,9 @@ func DBMetricsSetup[T interface {
 				Namespace: prometheusNamespace,
 				Subsystem: prometheusSubsystem,
 				Name:      "wait_duration",
+				ConstLabels: map[string]string{
+					"addr": addr,
+				},
 			}, func() float64 {
 				return float64(db.Stats().WaitDuration)
 			})
@@ -162,6 +177,9 @@ func DBMetricsSetup[T interface {
 				Namespace: prometheusNamespace,
 				Subsystem: prometheusSubsystem,
 				Name:      "max_idle_closed",
+				ConstLabels: map[string]string{
+					"addr": addr,
+				},
 			}, func() float64 {
 				return float64(db.Stats().MaxOpenConnections)
 			})
@@ -169,6 +187,9 @@ func DBMetricsSetup[T interface {
 				Namespace: prometheusNamespace,
 				Subsystem: prometheusSubsystem,
 				Name:      "max_lifetime_closed",
+				ConstLabels: map[string]string{
+					"addr": addr,
+				},
 			}, func() float64 {
 				return float64(db.Stats().MaxLifetimeClosed)
 			})
@@ -176,12 +197,15 @@ func DBMetricsSetup[T interface {
 				Namespace: prometheusNamespace,
 				Subsystem: prometheusSubsystem,
 				Name:      "max_idle_time_closed",
+				ConstLabels: map[string]string{
+					"addr": addr,
+				},
 			}, func() float64 {
 				return float64(db.Stats().MaxIdleTimeClosed)
 			})
 
 			if enableMyProfiler {
-				go myprofiler(db)
+				go myprofiler(db, addr)
 			}
 		}
 
@@ -228,7 +252,7 @@ func (p *RegexpNormalizer) Normalize(q string) string {
 	return p.re.ReplaceAllString(q, p.subs)
 }
 
-func myprofiler(db Queryer) {
+func myprofiler(db Queryer, addr string) {
 	regexpNormalizers = make([]*RegexpNormalizer, 0, len(regexpPairs))
 	for _, pair := range regexpPairs {
 		re, err := regexp.Compile(pair.target)
@@ -247,6 +271,9 @@ func myprofiler(db Queryer) {
 		Namespace: prometheusNamespace,
 		Subsystem: prometheusSubsystem,
 		Name:      "query_count",
+		ConstLabels: map[string]string{
+			"addr": addr,
+		},
 	}, []string{"query"})
 
 	ticker := time.NewTicker(myprofilerInterval)
