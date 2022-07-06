@@ -37,6 +37,22 @@ func NewBulkInsert(table, colNames, valueQuery string) *BulkInsert {
 	}
 }
 
+func NewBulkInsertWithArgNum(table, colNames, valueQuery string, argNum int) *BulkInsert {
+	sb := &strings.Builder{}
+	sb.WriteString("INSERT INTO ")
+	sb.WriteString(table)
+	sb.WriteString(" (")
+	sb.WriteString(colNames)
+	sb.WriteString(") VALUES ")
+
+	return &BulkInsert{
+		sb:         sb,
+		first:      true,
+		valueQuery: valueQuery,
+		args:       make([]any, 0, argNum),
+	}
+}
+
 func (b *BulkInsert) Add(args ...any) {
 	if b.first {
 		b.first = false
