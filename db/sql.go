@@ -2,7 +2,10 @@ package isudb
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -18,20 +21,31 @@ const (
 
 var (
 	enableRetry          = false
+	enableMyProfiler     = true
 	fixInterpolateParams = true
+	myprofilerInterval   = 1 * time.Second
 )
 
 func SetRetry(enable bool) {
 	enableRetry = enable
 }
 
+func SetMyProfiler(enable bool) {
+	enableMyProfiler = enable
+}
+
 func SetFixInterpolateParams(enable bool) {
 	fixInterpolateParams = enable
+}
+
+func SetMyProfilerInterval(interval time.Duration) {
+	myprofilerInterval = interval
 }
 
 func DBMetricsSetup[T interface {
 	Ping() error
 	Close() error
+	Query(query string, args ...any) (*sql.Rows, error)
 	SetConnMaxIdleTime(d time.Duration)
 	SetConnMaxLifetime(d time.Duration)
 	SetMaxIdleConns(n int)
@@ -165,8 +179,162 @@ func DBMetricsSetup[T interface {
 			}, func() float64 {
 				return float64(db.Stats().MaxIdleTimeClosed)
 			})
+
+			if enableMyProfiler {
+				go myprofiler(db)
+			}
 		}
 
 		return db, err
 	}
+}
+
+type Queryer interface {
+	Query(query string, args ...any) (*sql.Rows, error)
+}
+
+type RegexpPair struct {
+	target string
+	subs   string
+}
+
+var regexpPairs = []RegexpPair{
+	{
+		target: `[+\-]{0,1}\b\d+\b`,
+		subs:   "N",
+	}, {
+		target: `\b0x[0-9A-Fa-f]+\b`,
+		subs:   "0xN",
+	}, {
+		target: `'[^']+'`,
+		subs:   "S",
+	}, {
+		target: `"[^"]+"`,
+		subs:   "S",
+	}, {
+		target: `(([NS]\s*,\s*){4,})`,
+		subs:   "...",
+	},
+}
+
+var regexpNormalizers []*RegexpNormalizer
+
+type RegexpNormalizer struct {
+	re   *regexp.Regexp
+	subs string
+}
+
+func (p *RegexpNormalizer) Normalize(q string) string {
+	return p.re.ReplaceAllString(q, p.subs)
+}
+
+func myprofiler(db Queryer) {
+	regexpNormalizers = make([]*RegexpNormalizer, 0, len(regexpPairs))
+	for _, pair := range regexpPairs {
+		re, err := regexp.Compile(pair.target)
+		if err != nil {
+			log.Printf("failed to compile regexp: %s", err)
+			continue
+		}
+
+		regexpNormalizers = append(regexpNormalizers, &RegexpNormalizer{
+			re:   re,
+			subs: pair.subs,
+		})
+	}
+
+	vec := promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: prometheusNamespace,
+		Subsystem: prometheusSubsystem,
+		Name:      "query_count",
+	}, []string{"query"})
+
+	ticker := time.NewTicker(myprofilerInterval)
+	for range ticker.C {
+		queries, err := getRunningQueries(db)
+		if err != nil {
+			log.Printf("failed to get running queries: %s", err)
+			continue
+		}
+
+		queries = Normalize(queries)
+
+		for _, query := range queries {
+			vec.WithLabelValues(query).Inc()
+		}
+	}
+}
+
+func getRunningQueries(db Queryer) ([]string, error) {
+	query := "SHOW FULL PROCESSLIST"
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get running queries: %w", err)
+	}
+	defer rows.Close()
+
+	var queries []string
+	cs, err := rows.Columns()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get columns: %w", err)
+	}
+	lcs := len(cs)
+	if lcs != 8 && lcs != 9 {
+		return nil, fmt.Errorf("unexpected column count: %d", lcs)
+	}
+	for rows.Next() {
+		var (
+			user, host, db, command, state, info sql.NullString
+			id, time                             int
+		)
+		if lcs == 8 {
+			err = rows.Scan(&id, &user, &host, &db, &command, &time, &state, &info)
+		} else {
+			var progress interface{}
+			err = rows.Scan(&id, &user, &host, &db, &command, &time, &state, &info, &progress)
+		}
+		if err != nil {
+			log.Printf("failed to scan row: %s\n", err)
+			continue
+		}
+
+		if info.Valid && info.String != "" && info.String != query {
+			queries = append(queries, info.String)
+		}
+	}
+
+	return queries, nil
+}
+
+func Normalize(queries []string) []string {
+	normalized := make([]string, 0, len(queries))
+	for _, query := range queries {
+		for _, trimString := range trimStrings {
+			query = strings.Trim(query, trimString)
+		}
+		query = strings.TrimFunc(query, (&Trimer{}).TrimFunc)
+
+		for _, regexpNormalizer := range regexpNormalizers {
+			query = regexpNormalizer.Normalize(query)
+		}
+
+		normalized = append(normalized, query)
+	}
+
+	return normalized
+}
+
+var trimStrings = []string{`\'`, `\"`}
+
+type Trimer struct {
+	lastChar rune
+}
+
+func (tr *Trimer) TrimFunc(c rune) bool {
+	if tr.lastChar == ' ' && c == ' ' {
+		return true
+	}
+
+	tr.lastChar = c
+	return false
 }
