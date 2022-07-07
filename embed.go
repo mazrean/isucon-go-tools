@@ -7,6 +7,7 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/felixge/fgprof"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -22,6 +23,7 @@ func init() {
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/debug/fgprof", fgprof.Handler())
 
 	go func() {
 		err := http.ListenAndServe(addr, nil)
