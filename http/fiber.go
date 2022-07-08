@@ -51,7 +51,7 @@ func FiberMetricsMiddleware(next fiber.Handler) fiber.Handler {
 			return next(c)
 		}
 
-		path := c.Path()
+		path := c.Route().Path
 		host := c.Hostname()
 		method := c.Method()
 
