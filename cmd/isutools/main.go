@@ -5,6 +5,7 @@ import (
 	"github.com/mazrean/isucon-go-tools/analysers/db"
 	"github.com/mazrean/isucon-go-tools/analysers/echo"
 	"github.com/mazrean/isucon-go-tools/analysers/embed"
+	"github.com/mazrean/isucon-go-tools/analysers/fasthttp"
 	"github.com/mazrean/isucon-go-tools/analysers/fiber"
 	"github.com/mazrean/isucon-go-tools/analysers/gin"
 	"github.com/mazrean/isucon-go-tools/analysers/http"
@@ -21,6 +22,7 @@ func main() {
 		gin.Analyzer,
 		http.Analyzer,
 		fiber.Analyzer,
+		fasthttp.Analyzer,
 		db.Analyzer,
 		cache.Analyzer,
 		importer.Analyzer,
