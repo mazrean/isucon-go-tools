@@ -5,6 +5,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/valyala/fasthttp"
 )
 
 const (
@@ -67,10 +68,26 @@ func reqSize(req *http.Request) float64 {
 			size += float64(len(value))
 		}
 	}
-	size += float64(len(req.Host))
 
 	if req.ContentLength > 0 {
 		size += float64(req.ContentLength)
+	}
+
+	return size
+}
+
+// fastHTTPReqSize 大まかなリクエストサイズ
+func fastHTTPReqSize(req *fasthttp.Request) float64 {
+	size := 0.0
+
+	size += float64(len(req.Header.Method()))
+	size += float64(len(req.URI().PathOriginal()))
+	size += float64(len(req.Header.Protocol()))
+
+	size += float64(len(req.Header.Header()))
+
+	if req.Header.ContentLength() > 0 {
+		size += float64(req.Header.ContentLength())
 	}
 
 	return size
