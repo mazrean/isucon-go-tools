@@ -2,7 +2,10 @@ package isuhttp
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
+	"github.com/gofiber/fiber/v2/internal/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/valyala/fasthttp"
@@ -91,4 +94,41 @@ func fastHTTPReqSize(req *fasthttp.Request) float64 {
 	}
 
 	return size
+}
+
+type replacePair struct {
+	old, new string
+}
+
+var FilterFunc = func(path string) string {
+	pathList := strings.Split(path, "/")
+
+	replacePairs := []replacePair{}
+	for _, v := range pathList {
+		_, err := uuid.Parse(v)
+		if err == nil {
+			replacePairs = append(replacePairs, replacePair{
+				old: v,
+				new: "<uuid>",
+			})
+
+			continue
+		}
+
+		_, err = strconv.Atoi(v)
+		if err == nil {
+			replacePairs = append(replacePairs, replacePair{
+				old: v,
+				new: "<int>",
+			})
+
+			continue
+		}
+	}
+
+	for _, pair := range replacePairs {
+		path = strings.Replace(path, pair.old, pair.new, 1)
+	}
+
+	return path
 }

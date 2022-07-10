@@ -93,7 +93,7 @@ func FastMetricsMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler
 			return
 		}
 
-		path := string(ctx.Path())
+		path := FilterFunc(string(ctx.Path()))
 		host := string(ctx.Host())
 		method := string(ctx.Method())
 

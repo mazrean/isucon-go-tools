@@ -117,7 +117,7 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 
 		wrappedRes := newResponseWriterWithMetrics(res)
 
-		path := req.URL.Path
+		path := FilterFunc(req.URL.Path)
 		host := req.Host
 		method := req.Method
 
