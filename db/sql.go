@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/go-sql-driver/mysql"
 	isutools "github.com/mazrean/isucon-go-tools"
@@ -360,6 +361,10 @@ type Trimer struct {
 
 func (tr *Trimer) TrimFunc(c rune) bool {
 	if tr.lastChar == ' ' && c == ' ' {
+		return true
+	}
+
+	if !utf8.ValidRune(c) {
 		return true
 	}
 
