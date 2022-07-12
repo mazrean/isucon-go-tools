@@ -255,6 +255,12 @@ func (p *RegexpNormalizer) Normalize(q string) string {
 }
 
 func myprofiler(db Queryer, addr string) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("myprofiler panic: %v", err)
+		}
+	}()
+
 	regexpNormalizers = make([]*RegexpNormalizer, 0, len(regexpPairs))
 	for _, pair := range regexpPairs {
 		re, err := regexp.Compile(pair.target)
@@ -289,6 +295,10 @@ func myprofiler(db Queryer, addr string) {
 		queries = Normalize(queries)
 
 		for _, query := range queries {
+			if !utf8.ValidString(query) {
+				continue
+			}
+
 			vec.WithLabelValues(query).Inc()
 		}
 	}
