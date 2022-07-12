@@ -80,6 +80,7 @@ func DBMetricsSetup[T interface {
 				err   error
 			)
 			for first || err != nil {
+				first = false
 				db, err = fn(driverName, dataSourceName)
 				if err != nil {
 					return db, err
