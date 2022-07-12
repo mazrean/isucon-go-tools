@@ -181,6 +181,16 @@ func (m *Map[K, V]) Forget(key K) {
 	m.locker.Unlock()
 }
 
+func (m *Map[K, V]) Range(f func(K, V) bool) {
+	m.locker.RLock()
+	for k, v := range m.m {
+		if !f(k, v) {
+			break
+		}
+	}
+	m.locker.RUnlock()
+}
+
 func (m *Map[K, V]) Purge() {
 	if m.storeMetrics != nil {
 		m.storeMetrics.WithLabelValues("remove").Add(float64(len(m.m)))
@@ -299,6 +309,17 @@ func (m *AtomicMap[K, V, T]) Forget(key K) {
 	m.locker.Lock()
 	delete(m.m, key)
 	m.locker.Unlock()
+}
+
+func (m *AtomicMap[K, V, T]) Range(f func(K, V) bool) {
+	m.locker.RLock()
+	for k, vp := range m.m {
+		v := vp.Load()
+		if !f(k, v) {
+			break
+		}
+	}
+	m.locker.RUnlock()
 }
 
 func (m *AtomicMap[K, V, T]) Purge() {
