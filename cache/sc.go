@@ -168,6 +168,26 @@ func (m *Map[K, V]) Store(key K, value V) {
 	m.locker.Unlock()
 }
 
+func (m *Map[K, V]) Update(key K, f func(V) (V, bool)) {
+	m.locker.Lock()
+	v, ok := f(m.m[key])
+	if ok {
+		m.m[key] = v
+	}
+	m.locker.Unlock()
+}
+
+func (m *Map[K, V]) RangeUpdate(f func(K, V) (V, bool)) {
+	m.locker.Lock()
+	for k, v := range m.m {
+		v, ok := f(k, v)
+		if ok {
+			m.m[k] = v
+		}
+	}
+	m.locker.Unlock()
+}
+
 func (m *Map[K, V]) Forget(key K) {
 	if m.storeMetrics != nil {
 		m.locker.RLock()
@@ -323,6 +343,26 @@ func (m *AtomicMap[K, V, T]) Store(key K, value V) {
 	if m.loadMetrics != nil {
 		m.storeMetrics.WithLabelValues("new").Inc()
 	}
+}
+
+func (m *AtomicMap[K, V, T]) Update(key K, f func(V) (V, bool)) {
+	m.locker.Lock()
+	v, ok := f(m.m[key].Load())
+	if ok {
+		m.m[key].Store((*T)(v))
+	}
+	m.locker.Unlock()
+}
+
+func (m *AtomicMap[K, V, T]) RangeUpdate(f func(K, V) (V, bool)) {
+	m.locker.Lock()
+	for k, vp := range m.m {
+		v, ok := f(k, vp.Load())
+		if ok {
+			vp.Store((*T)(v))
+		}
+	}
+	m.locker.Unlock()
 }
 
 func (m *AtomicMap[K, V, T]) Forget(key K) {
