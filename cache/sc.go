@@ -2,6 +2,9 @@ package isucache
 
 import (
 	"context"
+	"encoding/gob"
+	"fmt"
+	"io"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -203,6 +206,33 @@ func (m *Map[K, V]) Purge() {
 	m.locker.Unlock()
 }
 
+func (m *Map[K, V]) WriteToGob(w io.Writer) error {
+	m.locker.RLock()
+	err := gob.NewEncoder(w).Encode(m.m)
+	m.locker.RUnlock()
+
+	if err != nil {
+		return fmt.Errorf("failed to write to gob: %w", err)
+	}
+
+	return nil
+}
+
+func (m *Map[K, V]) LoadFromGob(r io.Reader) error {
+	m.locker.Lock()
+	for k := range m.m {
+		delete(m.m, k)
+	}
+	err := gob.NewDecoder(r).Decode(&m.m)
+	m.locker.Unlock()
+
+	if err != nil {
+		return fmt.Errorf("failed to load from gob: %w", err)
+	}
+
+	return nil
+}
+
 type AtomicMap[K comparable, V *T, T any] struct {
 	m            map[K]*atomic.Pointer[T]
 	locker       sync.RWMutex
@@ -332,6 +362,43 @@ func (m *AtomicMap[K, V, T]) Purge() {
 		delete(m.m, k)
 	}
 	m.locker.Unlock()
+}
+
+func (m *AtomicMap[K, V, T]) WriteToGob(w io.Writer) error {
+	m.locker.RLock()
+	gobMap := make(map[K]V, len(m.m))
+	for k, vp := range m.m {
+		v := vp.Load()
+		gobMap[k] = v
+	}
+	m.locker.RUnlock()
+
+	err := gob.NewEncoder(w).Encode(gobMap)
+	if err != nil {
+		return fmt.Errorf("failed to write to gob: %w", err)
+	}
+
+	return nil
+}
+
+func (m *AtomicMap[K, V, T]) LoadFromGob(r io.Reader) error {
+	gobMap := make(map[K]V, len(m.m))
+	err := gob.NewDecoder(r).Decode(&gobMap)
+	if err != nil {
+		return fmt.Errorf("failed to load from gob: %w", err)
+	}
+
+	m.locker.Lock()
+	for k := range m.m {
+		delete(m.m, k)
+	}
+	for k, v := range gobMap {
+		m.m[k] = &atomic.Pointer[T]{}
+		m.m[k].Store((*T)(v))
+	}
+	m.locker.Unlock()
+
+	return nil
 }
 
 func AllPurge() {
