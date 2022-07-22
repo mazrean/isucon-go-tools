@@ -7,27 +7,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	isutools "github.com/mazrean/isucon-go-tools"
 )
 
 func FiberNew(conf ...fiber.Config) *fiber.App {
-	switch jsonSerializer {
-	case Sonic:
-		if len(conf) == 0 {
-			conf = []fiber.Config{
-				{
-					JSONEncoder: sonic.Marshal,
-					JSONDecoder: sonic.Unmarshal,
-				},
-			}
-		} else {
-			conf[0].JSONEncoder = sonic.Marshal
-			conf[0].JSONDecoder = sonic.Unmarshal
-		}
-	case GoJSON:
+	if enableGoJson {
 		if len(conf) == 0 {
 			conf = []fiber.Config{
 				{

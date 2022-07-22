@@ -1,7 +1,6 @@
 package isuhttp
 
 import (
-	stdjson "encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -10,28 +9,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bytedance/sonic/decoder"
-	"github.com/bytedance/sonic/encoder"
 	"github.com/goccy/go-json"
 	"github.com/labstack/echo/v4"
 	isutools "github.com/mazrean/isucon-go-tools"
 )
 
 var (
-	jsonSerializer = Sonic
+	enableGoJson = true
 )
-
-type JSONSerializerType uint8
-
-const (
-	Sonic JSONSerializerType = iota
-	GoJSON
-	StdJson
-)
-
-func SetJSONSerializer(newJsonSerializer JSONSerializerType) {
-	jsonSerializer = newJsonSerializer
-}
 
 func init() {
 	strEnableGoJson, ok := os.LookupEnv("GO_JSON")
@@ -39,24 +24,19 @@ func init() {
 		return
 	}
 
-	enableGoJson, err := strconv.ParseBool(strEnableGoJson)
+	subEnableGoJson, err := strconv.ParseBool(strEnableGoJson)
 	if err != nil {
 		log.Printf("failed to parse GO_JSON: %s\n", err)
 		return
 	}
 
-	if enableGoJson {
-		jsonSerializer = GoJSON
-	}
+	enableGoJson = subEnableGoJson
 }
 
 func EchoSetting(e *echo.Echo) *echo.Echo {
 	e.Use(EchoMetricsMiddleware)
 
-	switch jsonSerializer {
-	case Sonic:
-		e.JSONSerializer = SonicJSONSerializer{}
-	case GoJSON:
+	if enableGoJson {
 		e.JSONSerializer = JSONSerializer{}
 	}
 
@@ -87,26 +67,6 @@ func (JSONSerializer) Deserialize(c echo.Context, i any) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unmarshal type error: expected=%v, got=%v, field=%v, offset=%v", err.Type, err.Value, err.Field, err.Offset)).SetInternal(err)
 	case *json.SyntaxError:
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Syntax error: offset=%v, error=%v", err.Offset, err.Error())).SetInternal(err)
-	}
-
-	return err
-}
-
-type SonicJSONSerializer struct{}
-
-func (SonicJSONSerializer) Serialize(c echo.Context, i any, indent string) error {
-	enc := encoder.NewStreamEncoder(c.Response())
-	return enc.Encode(i)
-}
-
-func (SonicJSONSerializer) Deserialize(c echo.Context, i any) error {
-	err := decoder.NewStreamDecoder(c.Request().Body).Decode(i)
-
-	switch err := err.(type) {
-	case *stdjson.InvalidUnmarshalError:
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unmarshal type error: expected=%v", err.Type)).SetInternal(err)
-	case decoder.SyntaxError:
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Syntax error: offset=%v, error=%v", err.Pos, err.Error())).SetInternal(err)
 	}
 
 	return err
