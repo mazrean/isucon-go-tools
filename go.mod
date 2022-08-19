@@ -44,7 +44,7 @@ require (
 	github.com/felixge/fgprof v0.9.2
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/goccy/go-json v0.9.10
+	github.com/goccy/go-json v0.9.11
 	github.com/gofiber/fiber/v2 v2.36.0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/labstack/echo/v4 v4.8.0
