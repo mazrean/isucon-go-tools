@@ -7,25 +7,9 @@ on:
   pull_request:
 
 jobs:
-  mod:
-    name: Mod
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version-file: go.mod
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
-      - run: go mod download
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [mod]
     env:
       GOCACHE: "/tmp/go/cache"
     steps:
@@ -33,12 +17,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
+          cache: true
       - uses: actions/cache@v3
         with:
           path: /tmp/go/cache
@@ -50,18 +29,12 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: [mod]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
+          cache: true
       - run: go test ./... -v -coverprofile=./coverage.txt -race -vet=off
       - name: Upload coverage data
         uses: codecov/codecov-action@v3.1.0
@@ -75,21 +48,12 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    needs: [mod]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version-file: go.mod
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2.2
         with:
+          go-version-file: go.mod
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
