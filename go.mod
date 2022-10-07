@@ -49,7 +49,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/labstack/echo/v4 v4.9.0
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/motoki317/sc v1.4.2
+	github.com/motoki317/sc v1.5.0
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
