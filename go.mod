@@ -20,7 +20,7 @@ require (
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
-	github.com/labstack/gommon v0.3.1 // indirect
+	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
@@ -47,7 +47,7 @@ require (
 	github.com/goccy/go-json v0.9.11
 	github.com/gofiber/fiber/v2 v2.38.1
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/labstack/echo/v4 v4.9.0
+	github.com/labstack/echo/v4 v4.9.1
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/motoki317/sc v1.5.0
 	github.com/prometheus/client_model v0.2.0 // indirect
