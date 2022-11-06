@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/google/uuid v1.3.0
 	github.com/gostaticanalysis/analysisutil v0.7.1
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/valyala/fasthttp v1.41.0
 	golang.org/x/tools v0.2.0
 )
