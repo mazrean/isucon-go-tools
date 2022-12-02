@@ -45,7 +45,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/felixge/fgprof v0.9.3
 	github.com/gin-gonic/gin v1.8.1
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/goccy/go-json v0.9.11
 	github.com/gofiber/fiber/v2 v2.40.1
 	github.com/golang/protobuf v1.5.2 // indirect
