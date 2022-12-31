@@ -31,9 +31,9 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasttemplate v1.2.1 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
+	golang.org/x/crypto v0.2.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/goccy/go-json v0.10.0
 	github.com/gofiber/fiber/v2 v2.40.1
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/labstack/echo/v4 v4.9.1
+	github.com/labstack/echo/v4 v4.10.0
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/motoki317/sc v1.5.0
 	github.com/prometheus/client_model v0.3.0 // indirect
