@@ -486,6 +486,16 @@ func NewSlice[T any](name string, init []T, size int) *Slice[T] {
 	return m
 }
 
+func (s *Slice[T]) Set(index int, value T) {
+	s.locker.Lock()
+	s.s[index] = value
+
+	if s.lengthMetrics != nil {
+		s.lengthMetrics.Set(float64(len(s.s)))
+	}
+	s.locker.Unlock()
+}
+
 func (s *Slice[T]) Get(i int) (T, bool) {
 	if s.indexMetrics != nil {
 		s.indexMetrics.Observe(float64(i))
