@@ -441,6 +441,142 @@ func (m *AtomicMap[K, V, T]) LoadFromGob(r io.Reader) error {
 	return nil
 }
 
+type Slice[T any] struct {
+	s             []T
+	locker        sync.RWMutex
+	indexMetrics  prometheus.Histogram
+	lengthMetrics prometheus.Gauge
+}
+
+func NewSlice[T any](name string, init []T, size int) *Slice[T] {
+	var (
+		indexMetrics  prometheus.Histogram
+		lengthMetrics prometheus.Gauge
+	)
+	if isutools.Enable {
+		indexMetrics = promauto.NewHistogram(prometheus.HistogramOpts{
+			Namespace: prometheusNamespace,
+			Subsystem: prometheusSubsystem,
+			Name:      "index_access",
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
+			Buckets: prometheus.LinearBuckets(0, float64(size)/20, 20),
+		})
+
+		lengthMetrics = promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: prometheusNamespace,
+			Subsystem: prometheusSubsystem,
+			Name:      "length",
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
+		})
+	}
+
+	m := &Slice[T]{
+		s:             init,
+		locker:        sync.RWMutex{},
+		indexMetrics:  indexMetrics,
+		lengthMetrics: lengthMetrics,
+	}
+
+	cacheMap[name] = m
+
+	return m
+}
+
+func (s *Slice[T]) Get(i int) (T, bool) {
+	if s.indexMetrics != nil {
+		s.indexMetrics.Observe(float64(i))
+	}
+
+	var v T
+	s.locker.RLock()
+	if i >= len(s.s) {
+		s.locker.RUnlock()
+		return v, false
+	}
+
+	v = s.s[i]
+	s.locker.RUnlock()
+
+	return v, true
+}
+
+func (s *Slice[T]) Edit(f func([]T) []T) {
+	s.locker.Lock()
+	s.s = f(s.s)
+	s.locker.Unlock()
+}
+
+func (s *Slice[T]) Append(values ...T) {
+	s.locker.Lock()
+	s.s = append(s.s, values...)
+
+	if s.lengthMetrics != nil {
+		s.lengthMetrics.Set(float64(len(s.s)))
+	}
+	s.locker.Unlock()
+}
+
+func (s *Slice[T]) Len() int {
+	return len(s.s)
+}
+
+func (s *Slice[T]) Range(f func(int, T) bool) {
+	s.locker.RLock()
+	for i, v := range s.s {
+		if s.indexMetrics != nil {
+			s.indexMetrics.Observe(float64(i))
+		}
+		if !f(i, v) {
+			break
+		}
+	}
+	s.locker.RUnlock()
+}
+
+func (s *Slice[T]) Purge() {
+	if s.lengthMetrics != nil {
+		s.lengthMetrics.Set(0)
+	}
+
+	s.locker.Lock()
+	s.s = nil
+	s.locker.Unlock()
+}
+
+func (s *Slice[T]) WriteToGob(w io.Writer) error {
+	s.locker.RLock()
+	gobSlice := make([]T, 0, len(s.s))
+	for _, v := range s.s {
+		gobSlice = append(gobSlice, v)
+	}
+	s.locker.RUnlock()
+
+	err := gob.NewEncoder(w).Encode(gobSlice)
+	if err != nil {
+		return fmt.Errorf("failed to write to gob: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Slice[T]) LoadFromGob(r io.Reader) error {
+	gobSlice := []T{}
+	err := gob.NewDecoder(r).Decode(&gobSlice)
+	if err != nil {
+		return fmt.Errorf("failed to load from gob: %w", err)
+	}
+
+	s.locker.Lock()
+	s.s = gobSlice
+	s.locker.Unlock()
+
+	return nil
+}
+
 func AllPurge() {
 	for _, cache := range cacheMap {
 		cache.Purge()
