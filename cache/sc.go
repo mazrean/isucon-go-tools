@@ -496,6 +496,12 @@ func (s *Slice[T]) Set(index int, value T) {
 	s.locker.Unlock()
 }
 
+func (s *Slice[T]) Slice(start, end int, f func([]T)) {
+	s.locker.Lock()
+	f(s.s[start:end])
+	s.locker.Unlock()
+}
+
 func (s *Slice[T]) Get(i int) (T, bool) {
 	if s.indexMetrics != nil {
 		s.indexMetrics.Observe(float64(i))
