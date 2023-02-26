@@ -528,9 +528,9 @@ func (s *Slice[T]) Set(index int, value T) {
 }
 
 func (s *Slice[T]) Slice(start, end int, f func([]T)) {
-	s.locker.Lock()
+	s.locker.RLock()
 	f(s.s[start:end])
-	s.locker.Unlock()
+	s.locker.RUnlock()
 }
 
 func (s *Slice[T]) Get(i int) (T, bool) {
