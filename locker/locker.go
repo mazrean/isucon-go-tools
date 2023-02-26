@@ -5,6 +5,7 @@ import (
 
 	isutools "github.com/mazrean/isucon-go-tools"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const (
@@ -12,7 +13,7 @@ const (
 	prometheusSubsystem = "locker"
 )
 
-var lockHistVec = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var lockHistVec = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: prometheusNamespace,
 	Subsystem: prometheusSubsystem,
 	Name:      "index_access",
