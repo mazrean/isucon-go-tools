@@ -181,6 +181,13 @@ func (m *Map[K, V]) Store(key K, value V) {
 	m.locker.Unlock()
 }
 
+func (m *Map[K, V]) Len() int {
+	m.locker.RLock()
+	l := len(m.m)
+	m.locker.RUnlock()
+	return l
+}
+
 func (m *Map[K, V]) Update(key K, f func(V) (V, bool)) {
 	m.locker.Lock()
 	v, ok := f(m.m[key])
@@ -374,6 +381,14 @@ func (m *AtomicMap[K, V, T]) Store(key K, value V) {
 	if m.loadMetrics != nil {
 		m.storeMetrics.WithLabelValues("new").Inc()
 	}
+}
+
+func (m *AtomicMap[K, V, T]) Len() int {
+	m.locker.RLock()
+	l := len(m.m)
+	m.locker.RUnlock()
+
+	return l
 }
 
 func (m *AtomicMap[K, V, T]) Update(key K, f func(V) (V, bool)) {
