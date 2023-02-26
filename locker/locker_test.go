@@ -1,16 +1,16 @@
-package locker_test
+package isulocker_test
 
 import (
 	"sync"
 	"testing"
 
 	isucache "github.com/mazrean/isucon-go-tools/cache"
-	"github.com/mazrean/isucon-go-tools/locker"
+	isulocker "github.com/mazrean/isucon-go-tools/locker"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAfterFirst(t *testing.T) {
-	af := locker.NewAfterSuccess()
+	af := isulocker.NewAfterSuccess()
 
 	s := isucache.NewSlice("", []bool{}, 1000)
 	wg := sync.WaitGroup{}

@@ -1,4 +1,4 @@
-package locker
+package isulocker
 
 import (
 	"sync"
