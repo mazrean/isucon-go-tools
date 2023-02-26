@@ -150,6 +150,19 @@ func (m *Map[K, V]) Load(key K) (V, bool) {
 	return v, false
 }
 
+func (m *Map[K, V]) LoadOrStore(key K, value V) (V, bool) {
+	m.locker.Lock()
+	v, ok := m.m[key]
+	if ok {
+		return v, true
+	}
+
+	m.m[key] = value
+	m.locker.Unlock()
+
+	return value, false
+}
+
 func (m *Map[K, V]) Store(key K, value V) {
 	if m.loadMetrics != nil {
 		m.locker.RLock()
@@ -317,6 +330,24 @@ func (m *AtomicMap[K, V, T]) Load(key K) (V, bool) {
 	}
 
 	return nil, false
+}
+
+func (m *AtomicMap[K, V, T]) LoadOrStore(key K, value V) (V, bool) {
+	m.locker.Lock()
+	v, ok := m.m[key]
+	if ok {
+		val := v.Load()
+		m.locker.Unlock()
+
+		return val, true
+	}
+
+	v = &atomic.Pointer[T]{}
+	v.Store((*T)(value))
+	m.m[key] = v
+	m.locker.Unlock()
+
+	return value, false
 }
 
 func (m *AtomicMap[K, V, T]) Store(key K, value V) {
