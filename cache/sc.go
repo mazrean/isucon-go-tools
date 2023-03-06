@@ -588,6 +588,10 @@ func (s *Slice[T]) Edit(f func([]T) []T) {
 	s.locker.Lock()
 	defer s.locker.Unlock()
 	s.s = f(s.s)
+
+	if s.lengthMetrics != nil {
+		s.lengthMetrics.Set(float64(len(s.s)))
+	}
 }
 
 func (s *Slice[T]) Append(values ...T) {
