@@ -37,7 +37,7 @@ func (v *Value[T]) Read(f func(v *T)) {
 	if isutools.Enable {
 		timer := prometheus.NewTimer(lockHistVec.WithLabelValues(v.name, "read"))
 		v.locker.RLock()
-		timer.ObserveDuration()
+		defer timer.ObserveDuration()
 	} else {
 		v.locker.RLock()
 	}
@@ -50,7 +50,7 @@ func (v *Value[T]) Write(f func(v *T)) {
 	if isutools.Enable {
 		timer := prometheus.NewTimer(lockHistVec.WithLabelValues(v.name, "write"))
 		v.locker.Lock()
-		timer.ObserveDuration()
+		defer timer.ObserveDuration()
 	} else {
 		v.locker.Lock()
 	}
