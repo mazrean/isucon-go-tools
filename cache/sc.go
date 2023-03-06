@@ -130,18 +130,16 @@ func NewMap[K comparable, V any](name string) *Map[K, V] {
 
 func (m *Map[K, V]) Load(key K) (V, bool) {
 	m.locker.RLock()
+	defer m.locker.RUnlock()
 
 	v, ok := m.m[key]
 	if ok {
-		m.locker.RUnlock()
-
 		if m.loadMetrics != nil {
 			m.loadMetrics.WithLabelValues("hit").Inc()
 		}
 
 		return v, true
 	}
-	m.locker.RUnlock()
 
 	if m.loadMetrics != nil {
 		m.loadMetrics.WithLabelValues("miss").Inc()
@@ -152,13 +150,14 @@ func (m *Map[K, V]) Load(key K) (V, bool) {
 
 func (m *Map[K, V]) LoadOrStore(key K, value V) (V, bool) {
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	v, ok := m.m[key]
 	if ok {
 		return v, true
 	}
 
 	m.m[key] = value
-	m.locker.Unlock()
 
 	return value, false
 }
@@ -166,8 +165,9 @@ func (m *Map[K, V]) LoadOrStore(key K, value V) (V, bool) {
 func (m *Map[K, V]) Store(key K, value V) {
 	if m.loadMetrics != nil {
 		m.locker.RLock()
+		defer m.locker.RUnlock()
+
 		_, ok := m.m[key]
-		m.locker.RUnlock()
 
 		if ok {
 			m.storeMetrics.WithLabelValues("replace").Inc()
@@ -177,42 +177,46 @@ func (m *Map[K, V]) Store(key K, value V) {
 	}
 
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	m.m[key] = value
-	m.locker.Unlock()
 }
 
 func (m *Map[K, V]) Len() int {
 	m.locker.RLock()
+	defer m.locker.RUnlock()
+
 	l := len(m.m)
-	m.locker.RUnlock()
 	return l
 }
 
 func (m *Map[K, V]) Update(key K, f func(V) (V, bool)) {
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	v, ok := f(m.m[key])
 	if ok {
 		m.m[key] = v
 	}
-	m.locker.Unlock()
 }
 
 func (m *Map[K, V]) RangeUpdate(f func(K, V) (V, bool)) {
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	for k, v := range m.m {
 		v, ok := f(k, v)
 		if ok {
 			m.m[k] = v
 		}
 	}
-	m.locker.Unlock()
 }
 
 func (m *Map[K, V]) Forget(key K) {
 	if m.storeMetrics != nil {
 		m.locker.RLock()
+		defer m.locker.RUnlock()
 		_, ok := m.m[key]
-		m.locker.RUnlock()
 
 		if ok {
 			m.storeMetrics.WithLabelValues("remove").Inc()
@@ -220,18 +224,20 @@ func (m *Map[K, V]) Forget(key K) {
 	}
 
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	delete(m.m, key)
-	m.locker.Unlock()
 }
 
 func (m *Map[K, V]) Range(f func(K, V) bool) {
 	m.locker.RLock()
+	defer m.locker.RUnlock()
+
 	for k, v := range m.m {
 		if !f(k, v) {
 			break
 		}
 	}
-	m.locker.RUnlock()
 }
 
 func (m *Map[K, V]) Purge() {
@@ -240,17 +246,18 @@ func (m *Map[K, V]) Purge() {
 	}
 
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	for k := range m.m {
 		delete(m.m, k)
 	}
-	m.locker.Unlock()
 }
 
 func (m *Map[K, V]) WriteToGob(w io.Writer) error {
 	m.locker.RLock()
-	err := gob.NewEncoder(w).Encode(m.m)
-	m.locker.RUnlock()
+	defer m.locker.RUnlock()
 
+	err := gob.NewEncoder(w).Encode(m.m)
 	if err != nil {
 		return fmt.Errorf("failed to write to gob: %w", err)
 	}
@@ -260,12 +267,13 @@ func (m *Map[K, V]) WriteToGob(w io.Writer) error {
 
 func (m *Map[K, V]) LoadFromGob(r io.Reader) error {
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	for k := range m.m {
 		delete(m.m, k)
 	}
-	err := gob.NewDecoder(r).Decode(&m.m)
-	m.locker.Unlock()
 
+	err := gob.NewDecoder(r).Decode(&m.m)
 	if err != nil {
 		return fmt.Errorf("failed to load from gob: %w", err)
 	}
@@ -319,10 +327,11 @@ func NewAtomicMap[K comparable, V *T, T any](name string) *AtomicMap[K, V, T] {
 
 func (m *AtomicMap[K, V, T]) Load(key K) (V, bool) {
 	m.locker.RLock()
+	defer m.locker.RUnlock()
+
 	v, ok := m.m[key]
 	if ok {
 		val := v.Load()
-		m.locker.RUnlock()
 
 		if m.loadMetrics != nil {
 			m.loadMetrics.WithLabelValues("hit").Inc()
@@ -330,7 +339,6 @@ func (m *AtomicMap[K, V, T]) Load(key K) (V, bool) {
 
 		return val, true
 	}
-	m.locker.RUnlock()
 
 	if m.loadMetrics != nil {
 		m.loadMetrics.WithLabelValues("miss").Inc()
@@ -341,10 +349,10 @@ func (m *AtomicMap[K, V, T]) Load(key K) (V, bool) {
 
 func (m *AtomicMap[K, V, T]) LoadOrStore(key K, value V) (V, bool) {
 	m.locker.Lock()
+	defer m.locker.Unlock()
 	v, ok := m.m[key]
 	if ok {
 		val := v.Load()
-		m.locker.Unlock()
 
 		return val, true
 	}
@@ -352,17 +360,21 @@ func (m *AtomicMap[K, V, T]) LoadOrStore(key K, value V) (V, bool) {
 	v = &atomic.Pointer[T]{}
 	v.Store((*T)(value))
 	m.m[key] = v
-	m.locker.Unlock()
 
 	return value, false
 }
 
 func (m *AtomicMap[K, V, T]) Store(key K, value V) {
-	m.locker.RLock()
-	v, ok := m.m[key]
+	v, ok := func() (*atomic.Pointer[T], bool) {
+		m.locker.RLock()
+		defer m.locker.RUnlock()
+
+		v, ok := m.m[key]
+
+		return v, ok
+	}()
 	if ok {
 		v.Store((*T)(value))
-		m.locker.RUnlock()
 
 		if m.storeMetrics != nil {
 			m.storeMetrics.WithLabelValues("replace").Inc()
@@ -370,13 +382,14 @@ func (m *AtomicMap[K, V, T]) Store(key K, value V) {
 
 		return
 	}
-	m.locker.RUnlock()
 
 	v = &atomic.Pointer[T]{}
 	v.Store((*T)(value))
+
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	m.m[key] = v
-	m.locker.Unlock()
 
 	if m.loadMetrics != nil {
 		m.storeMetrics.WithLabelValues("new").Inc()
@@ -385,57 +398,60 @@ func (m *AtomicMap[K, V, T]) Store(key K, value V) {
 
 func (m *AtomicMap[K, V, T]) Len() int {
 	m.locker.RLock()
-	l := len(m.m)
-	m.locker.RUnlock()
+	defer m.locker.RUnlock()
 
-	return l
+	return len(m.m)
 }
 
 func (m *AtomicMap[K, V, T]) Update(key K, f func(V) (V, bool)) {
 	m.locker.Lock()
+	defer m.locker.Unlock()
 	v, ok := f(m.m[key].Load())
 	if ok {
 		m.m[key].Store((*T)(v))
 	}
-	m.locker.Unlock()
 }
 
 func (m *AtomicMap[K, V, T]) RangeUpdate(f func(K, V) (V, bool)) {
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	for k, vp := range m.m {
 		v, ok := f(k, vp.Load())
 		if ok {
 			vp.Store((*T)(v))
 		}
 	}
-	m.locker.Unlock()
 }
 
 func (m *AtomicMap[K, V, T]) Forget(key K) {
 	if m.storeMetrics != nil {
-		m.locker.RLock()
-		_, ok := m.m[key]
-		m.locker.RUnlock()
+		func() {
+			m.locker.RLock()
+			defer m.locker.RUnlock()
+			_, ok := m.m[key]
 
-		if ok {
-			m.storeMetrics.WithLabelValues("remove").Inc()
-		}
+			if ok {
+				m.storeMetrics.WithLabelValues("remove").Inc()
+			}
+		}()
 	}
 
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	delete(m.m, key)
-	m.locker.Unlock()
 }
 
 func (m *AtomicMap[K, V, T]) Range(f func(K, V) bool) {
 	m.locker.RLock()
+	defer m.locker.RUnlock()
 	for k, vp := range m.m {
 		v := vp.Load()
 		if !f(k, v) {
 			break
 		}
 	}
-	m.locker.RUnlock()
 }
 
 func (m *AtomicMap[K, V, T]) Purge() {
@@ -444,20 +460,22 @@ func (m *AtomicMap[K, V, T]) Purge() {
 	}
 
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	for k := range m.m {
 		delete(m.m, k)
 	}
-	m.locker.Unlock()
 }
 
 func (m *AtomicMap[K, V, T]) WriteToGob(w io.Writer) error {
 	m.locker.RLock()
+	defer m.locker.RUnlock()
+
 	gobMap := make(map[K]V, len(m.m))
 	for k, vp := range m.m {
 		v := vp.Load()
 		gobMap[k] = v
 	}
-	m.locker.RUnlock()
 
 	err := gob.NewEncoder(w).Encode(gobMap)
 	if err != nil {
@@ -475,6 +493,8 @@ func (m *AtomicMap[K, V, T]) LoadFromGob(r io.Reader) error {
 	}
 
 	m.locker.Lock()
+	defer m.locker.Unlock()
+
 	for k := range m.m {
 		delete(m.m, k)
 	}
@@ -482,7 +502,6 @@ func (m *AtomicMap[K, V, T]) LoadFromGob(r io.Reader) error {
 		m.m[k] = &atomic.Pointer[T]{}
 		m.m[k].Store((*T)(v))
 	}
-	m.locker.Unlock()
 
 	return nil
 }
@@ -534,18 +553,20 @@ func NewSlice[T any](name string, init []T, size int) *Slice[T] {
 
 func (s *Slice[T]) Set(index int, value T) {
 	s.locker.Lock()
+	defer s.locker.Unlock()
+
 	s.s[index] = value
 
 	if s.lengthMetrics != nil {
 		s.lengthMetrics.Set(float64(len(s.s)))
 	}
-	s.locker.Unlock()
 }
 
 func (s *Slice[T]) Slice(start, end int, f func([]T)) {
 	s.locker.RLock()
+	defer s.locker.RUnlock()
+
 	f(s.s[start:end])
-	s.locker.RUnlock()
 }
 
 func (s *Slice[T]) Get(i int) (T, bool) {
@@ -553,33 +574,31 @@ func (s *Slice[T]) Get(i int) (T, bool) {
 		s.indexMetrics.Observe(float64(i))
 	}
 
-	var v T
 	s.locker.RLock()
+	defer s.locker.RUnlock()
 	if i >= len(s.s) {
-		s.locker.RUnlock()
+		var v T
 		return v, false
 	}
 
-	v = s.s[i]
-	s.locker.RUnlock()
-
-	return v, true
+	return s.s[i], true
 }
 
 func (s *Slice[T]) Edit(f func([]T) []T) {
 	s.locker.Lock()
+	defer s.locker.Unlock()
 	s.s = f(s.s)
-	s.locker.Unlock()
 }
 
 func (s *Slice[T]) Append(values ...T) {
 	s.locker.Lock()
+	defer s.locker.Unlock()
+
 	s.s = append(s.s, values...)
 
 	if s.lengthMetrics != nil {
 		s.lengthMetrics.Set(float64(len(s.s)))
 	}
-	s.locker.Unlock()
 }
 
 func (s *Slice[T]) Len() int {
@@ -588,6 +607,8 @@ func (s *Slice[T]) Len() int {
 
 func (s *Slice[T]) Range(f func(int, T) bool) {
 	s.locker.RLock()
+	defer s.locker.RUnlock()
+
 	for i, v := range s.s {
 		if s.indexMetrics != nil {
 			s.indexMetrics.Observe(float64(i))
@@ -596,7 +617,6 @@ func (s *Slice[T]) Range(f func(int, T) bool) {
 			break
 		}
 	}
-	s.locker.RUnlock()
 }
 
 func (s *Slice[T]) Purge() {
@@ -605,17 +625,22 @@ func (s *Slice[T]) Purge() {
 	}
 
 	s.locker.Lock()
+	defer s.locker.Unlock()
 	s.s = nil
-	s.locker.Unlock()
 }
 
 func (s *Slice[T]) WriteToGob(w io.Writer) error {
-	s.locker.RLock()
-	gobSlice := make([]T, 0, len(s.s))
-	for _, v := range s.s {
-		gobSlice = append(gobSlice, v)
-	}
-	s.locker.RUnlock()
+	gobSlice := func() []T {
+		s.locker.RLock()
+		defer s.locker.RUnlock()
+
+		gobSlice := make([]T, 0, len(s.s))
+		for _, v := range s.s {
+			gobSlice = append(gobSlice, v)
+		}
+
+		return gobSlice
+	}()
 
 	err := gob.NewEncoder(w).Encode(gobSlice)
 	if err != nil {
@@ -633,8 +658,9 @@ func (s *Slice[T]) LoadFromGob(r io.Reader) error {
 	}
 
 	s.locker.Lock()
+	defer s.locker.Unlock()
+
 	s.s = gobSlice
-	s.locker.Unlock()
 
 	return nil
 }

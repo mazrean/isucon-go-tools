@@ -36,27 +36,24 @@ func NewValue[T any](value T, name string) *Value[T] {
 func (v *Value[T]) Read(f func(v *T)) {
 	if isutools.Enable {
 		timer := prometheus.NewTimer(lockHistVec.WithLabelValues(v.name, "read"))
-		v.locker.RLock()
 		defer timer.ObserveDuration()
-	} else {
-		v.locker.RLock()
 	}
 
+	v.locker.RLock()
+	defer v.locker.RUnlock()
+
 	f(&v.value)
-	v.locker.RUnlock()
 }
 
 func (v *Value[T]) Write(f func(v *T)) {
 	if isutools.Enable {
 		timer := prometheus.NewTimer(lockHistVec.WithLabelValues(v.name, "write"))
-		v.locker.Lock()
 		defer timer.ObserveDuration()
-	} else {
-		v.locker.Lock()
 	}
+	v.locker.Lock()
+	defer v.locker.Unlock()
 
 	f(&v.value)
-	v.locker.Unlock()
 }
 
 type WaitSuccess struct {
@@ -79,12 +76,15 @@ func NewAfterSuccess() *WaitSuccess {
 }
 
 func (af *WaitSuccess) Run(before func() bool, after func()) {
-	af.cond.L.Lock()
-	if af.isRunning && !af.succeeded {
-		af.cond.Wait()
-	}
-	af.isRunning = true
-	af.cond.L.Unlock()
+	func() {
+		af.cond.L.Lock()
+		defer af.cond.L.Unlock()
+
+		if af.isRunning && !af.succeeded {
+			af.cond.Wait()
+		}
+		af.isRunning = true
+	}()
 
 	if af.succeeded {
 		after()
@@ -92,9 +92,12 @@ func (af *WaitSuccess) Run(before func() bool, after func()) {
 		af.succeeded = before()
 	}
 
-	af.cond.L.Lock()
-	af.isRunning = false
-	af.cond.L.Unlock()
+	func() {
+		af.cond.L.Lock()
+		defer af.cond.L.Unlock()
+
+		af.isRunning = false
+	}()
 
 	if af.succeeded {
 		af.cond.Broadcast()
