@@ -585,9 +585,19 @@ func (s *Slice[T]) Get(i int) (T, bool) {
 }
 
 func (s *Slice[T]) Edit(f func([]T) []T) {
-	s.locker.Lock()
-	defer s.locker.Unlock()
-	s.s = f(s.s)
+	var newS []T
+	func() {
+		s.locker.RLock()
+		defer s.locker.RUnlock()
+		newS = f(s.s)
+	}()
+
+	func() {
+		s.locker.Lock()
+		defer s.locker.Unlock()
+
+		s.s = newS
+	}()
 
 	if s.lengthMetrics != nil {
 		s.lengthMetrics.Set(float64(len(s.s)))
