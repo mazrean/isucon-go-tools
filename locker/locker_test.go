@@ -12,7 +12,7 @@ import (
 func TestAfterFirst(t *testing.T) {
 	af := isulocker.NewAfterSuccess()
 
-	s := isucache.NewSlice("", []bool{}, 1000)
+	s := isucache.NewSlice[bool]("", 1000, 50)
 	wg := sync.WaitGroup{}
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
