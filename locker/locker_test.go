@@ -3,6 +3,7 @@ package isulocker_test
 import (
 	"sync"
 	"testing"
+	"time"
 
 	isucache "github.com/mazrean/isucon-go-tools/cache"
 	isulocker "github.com/mazrean/isucon-go-tools/locker"
@@ -20,6 +21,7 @@ func TestAfterFirst(t *testing.T) {
 			defer wg.Done()
 			af.Run(func() bool {
 				s.Append(true)
+				time.Sleep(1 * time.Second)
 
 				return true
 			}, func() {

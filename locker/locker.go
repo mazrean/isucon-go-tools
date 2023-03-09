@@ -2,6 +2,7 @@ package isulocker
 
 import (
 	"sync"
+	"sync/atomic"
 
 	isutools "github.com/mazrean/isucon-go-tools"
 	"github.com/prometheus/client_golang/prometheus"
@@ -59,18 +60,24 @@ func (v *Value[T]) Write(f func(v *T)) {
 type WaitSuccess struct {
 	// isRunning
 	// 実行中か
-	isRunning bool
+	isRunning *atomic.Bool
 	// succeeded
 	//一度でも成功したかどうか
 	// flaseからtrueへしか変わらない
-	succeeded bool
+	succeeded *atomic.Bool
 	cond      *sync.Cond
 }
 
 func NewAfterSuccess() *WaitSuccess {
+	isRunning := &atomic.Bool{}
+	isRunning.Store(false)
+
+	succeeded := &atomic.Bool{}
+	succeeded.Store(false)
+
 	return &WaitSuccess{
-		isRunning: false,
-		succeeded: false,
+		isRunning: isRunning,
+		succeeded: succeeded,
 		cond:      sync.NewCond(&sync.Mutex{}),
 	}
 }
@@ -80,26 +87,25 @@ func (af *WaitSuccess) Run(before func() bool, after func()) {
 		af.cond.L.Lock()
 		defer af.cond.L.Unlock()
 
-		if af.isRunning && !af.succeeded {
+		if af.isRunning.Load() && !af.succeeded.Load() {
 			af.cond.Wait()
 		}
-		af.isRunning = true
+		af.isRunning.Store(true)
 	}()
 
-	if af.succeeded {
+	if af.succeeded.Load() {
 		after()
 	} else {
-		af.succeeded = before()
-	}
+		result := before()
 
-	func() {
 		af.cond.L.Lock()
 		defer af.cond.L.Unlock()
 
-		af.isRunning = false
-	}()
+		af.succeeded.Store(result)
+		af.isRunning.Store(false)
+	}
 
-	if af.succeeded {
+	if af.succeeded.Load() {
 		af.cond.Broadcast()
 	} else {
 		af.cond.Signal()

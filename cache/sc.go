@@ -8,6 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unsafe"
 
 	isutools "github.com/mazrean/isucon-go-tools"
 	"github.com/motoki317/sc"
@@ -508,11 +509,18 @@ func (m *AtomicMap[K, V, T]) LoadFromGob(r io.Reader) error {
 
 type Slice[T any] struct {
 	s             []T
-	locker        sync.RWMutex
-	page          int
+	pageSize      int
 	offset        int
-	lockers       []sync.RWMutex
+	reservedLen   int64
+	dataLocker    sync.RWMutex
+	pageLockers   []sync.RWMutex
 	lengthMetrics prometheus.Gauge
+}
+
+type sliceHeader struct {
+	data unsafe.Pointer
+	len  int64
+	cap  int64
 }
 
 func NewSlice[T any](name string, capacity, shard int) *Slice[T] {
@@ -532,10 +540,11 @@ func NewSlice[T any](name string, capacity, shard int) *Slice[T] {
 
 	m := &Slice[T]{
 		s:             make([]T, 0, capacity),
-		locker:        sync.RWMutex{},
-		page:          (capacity + shard - 1) / shard,
+		pageSize:      (capacity + shard - 1) / shard,
 		offset:        0,
-		lockers:       make([]sync.RWMutex, shard),
+		reservedLen:   0,
+		dataLocker:    sync.RWMutex{},
+		pageLockers:   make([]sync.RWMutex, shard),
 		lengthMetrics: lengthMetrics,
 	}
 
@@ -545,19 +554,23 @@ func NewSlice[T any](name string, capacity, shard int) *Slice[T] {
 }
 
 func (s *Slice[T]) Set(index int, value T) {
-	s.locker.RLock()
-	defer s.locker.RUnlock()
+	s.dataLocker.RLock()
+	defer s.dataLocker.RUnlock()
 
 	s.s[index] = value
 }
 
 func (s *Slice[T]) Slice(start, end int) *Slice[T] {
-	if start > end {
+	s.dataLocker.RLock()
+	defer s.dataLocker.RUnlock()
+
+	if start < 0 || end > cap(s.s) || start > end {
 		return &Slice[T]{
 			s:             make([]T, 0),
-			locker:        sync.RWMutex{},
-			page:          s.page,
-			lockers:       s.lockers,
+			pageSize:      s.pageSize,
+			reservedLen:   0,
+			dataLocker:    sync.RWMutex{},
+			pageLockers:   make([]sync.RWMutex, 0),
 			lengthMetrics: nil,
 		}
 	}
@@ -565,45 +578,42 @@ func (s *Slice[T]) Slice(start, end int) *Slice[T] {
 	startPage := s.getPage(start)
 	endPage := s.getPage(end - 1)
 
-	s.locker.RLock()
-	defer s.locker.RUnlock()
-
 	return &Slice[T]{
 		s:             s.s[start:end],
-		locker:        sync.RWMutex{},
-		page:          s.page,
-		offset:        start + s.offset - startPage*s.page,
-		lockers:       s.lockers[startPage : endPage+1],
+		pageSize:      s.pageSize,
+		offset:        start + s.offset - startPage*s.pageSize,
+		reservedLen:   int64(end - start),
+		dataLocker:    sync.RWMutex{},
+		pageLockers:   s.pageLockers[startPage : endPage+1],
 		lengthMetrics: nil,
 	}
 }
 
 func (s *Slice[T]) Get(i int) (T, bool) {
-	page := s.getPage(i)
-
-	s.locker.RLock()
-	defer s.locker.RUnlock()
-	s.lockers[page].RLock()
-	defer s.lockers[page].RUnlock()
-
-	if i >= len(s.s) {
+	if int64(i) >= s.len() {
 		var v T
 		return v, false
 	}
+
+	page := s.getPage(i)
+	s.dataLocker.RLock()
+	defer s.dataLocker.RUnlock()
+	s.pageLockers[page].RLock()
+	defer s.pageLockers[page].RUnlock()
 
 	return s.s[i], true
 }
 
 func (s *Slice[T]) Forget(i int) {
-	s.locker.RLock()
-	defer s.locker.RUnlock()
-
-	if i >= len(s.s) {
+	if int64(i) >= s.len() {
 		return
 	}
 
 	pageI := s.getPage(i)
-	locker := &s.lockers[pageI]
+
+	s.dataLocker.RLock()
+	defer s.dataLocker.RUnlock()
+	locker := &s.pageLockers[pageI]
 	baseS := s.s[:cap(s.s)]
 
 	locker.Lock()
@@ -611,15 +621,15 @@ func (s *Slice[T]) Forget(i int) {
 		locker.Unlock()
 	}()
 
-	for j := i + 1; j < cap(s.s); j++ {
-		pageJ := s.getPage(j + 1)
+	for j := i + 1; int64(j) < s.len(); j++ {
+		pageJ := s.getPage(j)
 
 		func() {
 			if pageI != pageJ {
 				defer locker.Unlock()
 
 				pageI = pageJ
-				locker = &s.lockers[pageJ]
+				locker = &s.pageLockers[pageJ]
 				locker.Lock()
 			}
 
@@ -630,48 +640,71 @@ func (s *Slice[T]) Forget(i int) {
 
 func (s *Slice[T]) Append(values ...T) {
 	func() {
-		s.locker.Lock()
+		valuesLen := int64(len(values))
 
-		beforeLen := len(s.s)
-		afterLen := len(s.s) + len(values)
-		if afterLen > cap(s.s) {
-			s.s = append(s.s, values...)
-			s.locker.Unlock()
-			return
-		}
-		s.s = s.s[:afterLen]
+		s.dataLocker.RLock()
+
+		afterLen := s.reserveLen(valuesLen)
+		beforeLen := int(afterLen) - len(values)
 
 		startPage := s.getPage(beforeLen)
-		endPage := s.getPage(afterLen-1) + 1
-		for i := startPage; i < endPage; i++ {
-			s.lockers[i].Lock()
-			defer s.lockers[i].Unlock()
-		}
-		s.locker.Unlock()
+		endPage := s.getPage(int(afterLen)-1) + 1
+		if afterLen <= int64(cap(s.s)) {
+			s.addLen(valuesLen)
+			for i := startPage; i < endPage; i++ {
+				s.pageLockers[i].Lock()
+				defer s.pageLockers[i].Unlock()
+			}
 
-		s.locker.RLock()
-		defer s.locker.RUnlock()
-		copy(s.s[beforeLen:afterLen], values)
+			copy(s.s[beforeLen:afterLen], values)
+			s.dataLocker.RUnlock()
+			return
+		}
+		s.dataLocker.RUnlock()
+
+		s.dataLocker.Lock()
+		defer s.dataLocker.Unlock()
+
+		s.s = append(s.s, values...)
+		for i := beforeLen; i <= cap(s.pageLockers); i += s.pageSize {
+			s.pageLockers = append(s.pageLockers, sync.RWMutex{})
+		}
 	}()
 
 	if s.lengthMetrics != nil {
-		s.lengthMetrics.Set(float64(len(s.s)))
+		s.lengthMetrics.Set(float64(s.len()))
 	}
 }
 
 func (s *Slice[T]) Len() int {
-	s.locker.RLock()
-	defer s.locker.RUnlock()
+	return int(s.len())
+}
 
-	return len(s.s)
+func (s *Slice[T]) len() int64 {
+	return atomic.LoadInt64(&(*sliceHeader)(unsafe.Pointer(&s.s)).len)
+}
+
+func (s *Slice[T]) reserveLen(l int64) int64 {
+	return atomic.AddInt64(&s.reservedLen, l)
+}
+
+func (s *Slice[T]) addLen(l int64) int64 {
+	return atomic.AddInt64(&(*sliceHeader)(unsafe.Pointer(&s.s)).len, l)
+}
+
+func (s *Slice[T]) Cap() int {
+	s.dataLocker.RLock()
+	defer s.dataLocker.RUnlock()
+
+	return cap(s.s)
 }
 
 func (s *Slice[T]) Range(f func(int, T) bool) {
-	s.locker.RLock()
-	defer s.locker.RUnlock()
+	s.dataLocker.RLock()
+	defer s.dataLocker.RUnlock()
 
 	page := s.getPage(0)
-	locker := &s.lockers[0]
+	locker := &s.pageLockers[0]
 	locker.RLock()
 	for i, v := range s.s {
 		pageI := s.getPage(i)
@@ -679,7 +712,7 @@ func (s *Slice[T]) Range(f func(int, T) bool) {
 			locker.RUnlock()
 
 			page = pageI
-			locker = &s.lockers[page]
+			locker = &s.pageLockers[page]
 			locker.RLock()
 		}
 
@@ -695,13 +728,13 @@ func (s *Slice[T]) Purge() {
 		s.lengthMetrics.Set(0)
 	}
 
-	s.locker.Lock()
-	defer s.locker.Unlock()
+	s.dataLocker.Lock()
+	defer s.dataLocker.Unlock()
 	s.s = nil
 }
 
 func (s *Slice[T]) getPage(i int) int {
-	return (i + s.offset) / s.page
+	return (i + s.offset) / s.pageSize
 }
 
 func AllPurge() {
