@@ -650,11 +650,11 @@ func (s *Slice[T]) Append(values ...T) {
 		startPage := s.getPage(beforeLen)
 		endPage := s.getPage(int(afterLen)-1) + 1
 		if afterLen <= int64(cap(s.s)) {
-			s.addLen(valuesLen)
 			for i := startPage; i < endPage; i++ {
 				s.pageLockers[i].Lock()
 				defer s.pageLockers[i].Unlock()
 			}
+			s.addLen(valuesLen)
 
 			copy(s.s[beforeLen:afterLen], values)
 			s.dataLocker.RUnlock()
@@ -666,7 +666,7 @@ func (s *Slice[T]) Append(values ...T) {
 		defer s.dataLocker.Unlock()
 
 		s.s = append(s.s, values...)
-		for i := beforeLen; i <= cap(s.pageLockers); i += s.pageSize {
+		for i := s.pageSize * len(s.pageLockers); i <= cap(s.s); i += s.pageSize {
 			s.pageLockers = append(s.pageLockers, sync.RWMutex{})
 		}
 	}()
