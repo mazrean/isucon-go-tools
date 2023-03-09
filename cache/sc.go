@@ -509,6 +509,179 @@ func (m *AtomicMap[K, V, T]) LoadFromGob(r io.Reader) error {
 
 type Slice[T any] struct {
 	s             []T
+	locker        sync.RWMutex
+	indexMetrics  prometheus.Histogram
+	lengthMetrics prometheus.Gauge
+}
+
+func NewSlice[T any](name string, size int) *Slice[T] {
+	var (
+		indexMetrics  prometheus.Histogram
+		lengthMetrics prometheus.Gauge
+	)
+	if isutools.Enable {
+		indexMetrics = promauto.NewHistogram(prometheus.HistogramOpts{
+			Namespace: prometheusNamespace,
+			Subsystem: prometheusSubsystem,
+			Name:      "index_access",
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
+			Buckets: prometheus.LinearBuckets(0, float64(size)/20, 20),
+		})
+
+		lengthMetrics = promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: prometheusNamespace,
+			Subsystem: prometheusSubsystem,
+			Name:      "length",
+			ConstLabels: prometheus.Labels{
+				"name": name,
+			},
+		})
+	}
+
+	m := &Slice[T]{
+		s:             make([]T, 0, size),
+		locker:        sync.RWMutex{},
+		indexMetrics:  indexMetrics,
+		lengthMetrics: lengthMetrics,
+	}
+
+	cacheMap[name] = m
+
+	return m
+}
+
+func (s *Slice[T]) Set(index int, value T) {
+	s.locker.Lock()
+	defer s.locker.Unlock()
+
+	s.s[index] = value
+
+	if s.lengthMetrics != nil {
+		s.lengthMetrics.Set(float64(len(s.s)))
+	}
+}
+
+func (s *Slice[T]) Slice(start, end int, f func([]T)) {
+	s.locker.RLock()
+	defer s.locker.RUnlock()
+
+	f(s.s[start:end])
+}
+
+func (s *Slice[T]) Get(i int) (T, bool) {
+	if s.indexMetrics != nil {
+		s.indexMetrics.Observe(float64(i))
+	}
+
+	s.locker.RLock()
+	defer s.locker.RUnlock()
+	if i >= len(s.s) {
+		var v T
+		return v, false
+	}
+
+	return s.s[i], true
+}
+
+func (s *Slice[T]) Edit(f func([]T) []T) {
+	var newS []T
+	func() {
+		s.locker.RLock()
+		defer s.locker.RUnlock()
+		newS = f(s.s)
+	}()
+
+	func() {
+		s.locker.Lock()
+		defer s.locker.Unlock()
+
+		s.s = newS
+	}()
+
+	if s.lengthMetrics != nil {
+		s.lengthMetrics.Set(float64(len(s.s)))
+	}
+}
+
+func (s *Slice[T]) Append(values ...T) {
+	s.locker.Lock()
+	defer s.locker.Unlock()
+
+	s.s = append(s.s, values...)
+
+	if s.lengthMetrics != nil {
+		s.lengthMetrics.Set(float64(len(s.s)))
+	}
+}
+
+func (s *Slice[T]) Len() int {
+	return len(s.s)
+}
+
+func (s *Slice[T]) Range(f func(int, T) bool) {
+	s.locker.RLock()
+	defer s.locker.RUnlock()
+
+	for i, v := range s.s {
+		if s.indexMetrics != nil {
+			s.indexMetrics.Observe(float64(i))
+		}
+		if !f(i, v) {
+			break
+		}
+	}
+}
+
+func (s *Slice[T]) Purge() {
+	if s.lengthMetrics != nil {
+		s.lengthMetrics.Set(0)
+	}
+
+	s.locker.Lock()
+	defer s.locker.Unlock()
+	s.s = nil
+}
+
+func (s *Slice[T]) WriteToGob(w io.Writer) error {
+	gobSlice := func() []T {
+		s.locker.RLock()
+		defer s.locker.RUnlock()
+
+		gobSlice := make([]T, 0, len(s.s))
+		for _, v := range s.s {
+			gobSlice = append(gobSlice, v)
+		}
+
+		return gobSlice
+	}()
+
+	err := gob.NewEncoder(w).Encode(gobSlice)
+	if err != nil {
+		return fmt.Errorf("failed to write to gob: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Slice[T]) LoadFromGob(r io.Reader) error {
+	gobSlice := []T{}
+	err := gob.NewDecoder(r).Decode(&gobSlice)
+	if err != nil {
+		return fmt.Errorf("failed to load from gob: %w", err)
+	}
+
+	s.locker.Lock()
+	defer s.locker.Unlock()
+
+	s.s = gobSlice
+
+	return nil
+}
+
+type NoDeleteSlice[T any] struct {
+	s             []T
 	pageSize      int
 	offset        int
 	reservedLen   int64
@@ -523,7 +696,7 @@ type sliceHeader struct {
 	cap  int64
 }
 
-func NewSlice[T any](name string, capacity, shard int) *Slice[T] {
+func NewNoDeleteSlice[T any](name string, capacity, shard int) *NoDeleteSlice[T] {
 	var (
 		lengthMetrics prometheus.Gauge
 	)
@@ -538,7 +711,7 @@ func NewSlice[T any](name string, capacity, shard int) *Slice[T] {
 		})
 	}
 
-	m := &Slice[T]{
+	m := &NoDeleteSlice[T]{
 		s:             make([]T, 0, capacity),
 		pageSize:      (capacity + shard - 1) / shard,
 		offset:        0,
@@ -553,19 +726,19 @@ func NewSlice[T any](name string, capacity, shard int) *Slice[T] {
 	return m
 }
 
-func (s *Slice[T]) Set(index int, value T) {
+func (s *NoDeleteSlice[T]) Set(index int, value T) {
 	s.dataLocker.RLock()
 	defer s.dataLocker.RUnlock()
 
 	s.s[index] = value
 }
 
-func (s *Slice[T]) Slice(start, end int) *Slice[T] {
+func (s *NoDeleteSlice[T]) Slice(start, end int) *NoDeleteSlice[T] {
 	s.dataLocker.RLock()
 	defer s.dataLocker.RUnlock()
 
 	if start < 0 || end > cap(s.s) || start > end {
-		return &Slice[T]{
+		return &NoDeleteSlice[T]{
 			s:             make([]T, 0),
 			pageSize:      s.pageSize,
 			reservedLen:   0,
@@ -578,7 +751,7 @@ func (s *Slice[T]) Slice(start, end int) *Slice[T] {
 	startPage := s.getPage(start)
 	endPage := s.getPage(end - 1)
 
-	return &Slice[T]{
+	return &NoDeleteSlice[T]{
 		s:             s.s[start:end],
 		pageSize:      s.pageSize,
 		offset:        start + s.offset - startPage*s.pageSize,
@@ -589,7 +762,7 @@ func (s *Slice[T]) Slice(start, end int) *Slice[T] {
 	}
 }
 
-func (s *Slice[T]) Get(i int) (T, bool) {
+func (s *NoDeleteSlice[T]) Get(i int) (T, bool) {
 	if int64(i) >= s.len() {
 		var v T
 		return v, false
@@ -604,41 +777,7 @@ func (s *Slice[T]) Get(i int) (T, bool) {
 	return s.s[i], true
 }
 
-func (s *Slice[T]) Forget(i int) {
-	if int64(i) >= s.len() {
-		return
-	}
-
-	pageI := s.getPage(i)
-
-	s.dataLocker.RLock()
-	defer s.dataLocker.RUnlock()
-	locker := &s.pageLockers[pageI]
-	baseS := s.s[:cap(s.s)]
-
-	locker.Lock()
-	defer func() {
-		locker.Unlock()
-	}()
-
-	for j := i + 1; int64(j) < s.len(); j++ {
-		pageJ := s.getPage(j)
-
-		func() {
-			if pageI != pageJ {
-				defer locker.Unlock()
-
-				pageI = pageJ
-				locker = &s.pageLockers[pageJ]
-				locker.Lock()
-			}
-
-			baseS[j-1] = baseS[j]
-		}()
-	}
-}
-
-func (s *Slice[T]) Append(values ...T) {
+func (s *NoDeleteSlice[T]) Append(values ...T) {
 	func() {
 		valuesLen := int64(len(values))
 
@@ -676,30 +815,34 @@ func (s *Slice[T]) Append(values ...T) {
 	}
 }
 
-func (s *Slice[T]) Len() int {
+func (s *NoDeleteSlice[T]) Len() int {
 	return int(s.len())
 }
 
-func (s *Slice[T]) len() int64 {
+func (s *NoDeleteSlice[T]) len() int64 {
 	return atomic.LoadInt64(&(*sliceHeader)(unsafe.Pointer(&s.s)).len)
 }
 
-func (s *Slice[T]) reserveLen(l int64) int64 {
+func (s *NoDeleteSlice[T]) reserveLen(l int64) int64 {
 	return atomic.AddInt64(&s.reservedLen, l)
 }
 
-func (s *Slice[T]) addLen(l int64) int64 {
+func (s *NoDeleteSlice[T]) addLen(l int64) int64 {
 	return atomic.AddInt64(&(*sliceHeader)(unsafe.Pointer(&s.s)).len, l)
 }
 
-func (s *Slice[T]) Cap() int {
+func (s *NoDeleteSlice[T]) subLen(l int64) int64 {
+	return atomic.AddInt64(&(*sliceHeader)(unsafe.Pointer(&s.s)).len, -l)
+}
+
+func (s *NoDeleteSlice[T]) Cap() int {
 	s.dataLocker.RLock()
 	defer s.dataLocker.RUnlock()
 
 	return cap(s.s)
 }
 
-func (s *Slice[T]) Range(f func(int, T) bool) {
+func (s *NoDeleteSlice[T]) Range(f func(int, T) bool) {
 	s.dataLocker.RLock()
 	defer s.dataLocker.RUnlock()
 
@@ -723,7 +866,7 @@ func (s *Slice[T]) Range(f func(int, T) bool) {
 	locker.RUnlock()
 }
 
-func (s *Slice[T]) Purge() {
+func (s *NoDeleteSlice[T]) Purge() {
 	if s.lengthMetrics != nil {
 		s.lengthMetrics.Set(0)
 	}
@@ -733,7 +876,7 @@ func (s *Slice[T]) Purge() {
 	s.s = nil
 }
 
-func (s *Slice[T]) getPage(i int) int {
+func (s *NoDeleteSlice[T]) getPage(i int) int {
 	return (i + s.offset) / s.pageSize
 }
 
