@@ -165,16 +165,18 @@ func (m *Map[K, V]) LoadOrStore(key K, value V) (V, bool) {
 
 func (m *Map[K, V]) Store(key K, value V) {
 	if m.loadMetrics != nil {
-		m.locker.RLock()
-		defer m.locker.RUnlock()
+		func() {
+			m.locker.RLock()
+			defer m.locker.RUnlock()
 
-		_, ok := m.m[key]
+			_, ok := m.m[key]
 
-		if ok {
-			m.storeMetrics.WithLabelValues("replace").Inc()
-		} else {
-			m.storeMetrics.WithLabelValues("new").Inc()
-		}
+			if ok {
+				m.storeMetrics.WithLabelValues("replace").Inc()
+			} else {
+				m.storeMetrics.WithLabelValues("new").Inc()
+			}
+		}()
 	}
 
 	m.locker.Lock()
