@@ -2,6 +2,7 @@ package isucache
 
 import (
 	"errors"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -27,7 +28,9 @@ type BPTree[K any, V any] struct {
 	order      int
 	locker     sync.RWMutex
 	root       *atomic.Pointer[node[K, V]]
-	size       *atomic.Uint64
+	left       *atomic.Pointer[node[K, V]]
+	right      *atomic.Pointer[node[K, V]]
+	size       *atomic.Int64
 }
 
 type node[K any, V any] struct {
@@ -40,8 +43,8 @@ type node[K any, V any] struct {
 }
 
 type entry[K any, V any] struct {
-	locker sync.RWMutex
 	key    K
+	locker sync.RWMutex
 	value  V
 }
 
@@ -63,7 +66,7 @@ func NewBPTree[V any, K any](name string, order int, comparator func(K, K) int8)
 		order:      order,
 		locker:     sync.RWMutex{},
 		root:       root,
-		size:       &atomic.Uint64{},
+		size:       &atomic.Int64{},
 	}
 
 	cacheMap[name] = t
@@ -106,6 +109,10 @@ func (t *BPTree[K, V]) Purge() {
 	t.size.Store(0)
 }
 
+func (t *BPTree[K, V]) Len() int64 {
+	return t.size.Load()
+}
+
 func (t *BPTree[K, V]) Store(key K, value V) {
 	n, isEnd := t.root.Load(), false
 	for !isEnd {
@@ -118,8 +125,10 @@ func (t *BPTree[K, V]) Store(key K, value V) {
 
 			pos, found := t.search(n, key)
 			if found {
-				n.entries[pos].value = value
 				isEnd = true
+				n.entries[pos].locker.Lock()
+				defer n.entries[pos].locker.Unlock()
+				n.entries[pos].value = value
 				return
 			}
 
@@ -180,8 +189,10 @@ func (t *BPTree[K, V]) Load(key K) (V, bool) {
 
 			pos, found := t.search(n, key)
 			if found {
-				v = n.entries[pos].value
 				ok = true
+				n.entries[pos].locker.RLock()
+				defer n.entries[pos].locker.RUnlock()
+				v = n.entries[pos].value
 				return
 			}
 
@@ -201,23 +212,115 @@ func (t *BPTree[K, V]) Load(key K) (V, bool) {
 	return v, false
 }
 
-func (t *BPTree[K, V]) search(n *node[K, V], key K) (int, bool) {
-	low, high := 0, len(n.entries)-1
-	var mid int
-	for low <= high {
-		mid = (low + high) / 2
-		compare := t.comparator(key, n.entries[mid].key)
-		switch {
-		case compare > 0:
-			low = mid + 1
-		case compare < 0:
-			high = mid - 1
-		default:
-			return mid, true
-		}
+func (t *BPTree[K, V]) Slice(start, end K) []V {
+	if t.comparator(start, end) > 0 {
+		return nil
 	}
 
-	return low, false
+	s := []V{}
+
+	isEnd := false
+	n := t.root.Load()
+	for !isEnd {
+		func() {
+			n.locker.RLock()
+			defer n.locker.RUnlock()
+
+			pos, _ := t.search(n, start)
+
+			if len(n.children) == 0 {
+				isEnd = true
+				return
+			}
+
+			n = n.children[pos]
+		}()
+	}
+
+	for n != nil {
+		func() {
+			n.locker.RLock()
+			defer n.locker.RUnlock()
+
+			for _, e := range n.entries {
+				if t.comparator(e.key, end) > 0 {
+					n = nil
+					return
+				}
+
+				func() {
+					e.locker.RLock()
+					defer e.locker.RUnlock()
+
+					s = append(s, e.value)
+				}()
+			}
+
+			n = n.right.Load()
+		}()
+	}
+
+	return s
+}
+
+func (t *BPTree[K, V]) ReverseSlice(start, end K) []V {
+	if t.comparator(start, end) < 0 {
+		return nil
+	}
+
+	s := []V{}
+
+	isEnd := false
+	n := t.root.Load()
+	for !isEnd {
+		func() {
+			n.locker.RLock()
+			defer n.locker.RUnlock()
+
+			pos, _ := t.search(n, start)
+
+			if len(n.children) == 0 {
+				isEnd = true
+				return
+			}
+
+			n = n.children[pos]
+		}()
+	}
+
+	for n != nil {
+		func() {
+			n.locker.RLock()
+			defer n.locker.RUnlock()
+
+			for i := len(n.entries) - 1; i >= 0; i-- {
+				if t.comparator(n.entries[i].key, end) < 0 {
+					n = nil
+					return
+				}
+
+				func() {
+					n.entries[i].locker.RLock()
+					defer n.entries[i].locker.RUnlock()
+
+					s = append(s, n.entries[i].value)
+				}()
+			}
+
+			n = n.left.Load()
+		}()
+	}
+
+	return s
+}
+
+func (t *BPTree[K, V]) search(n *node[K, V], key K) (int, bool) {
+	i := sort.Search(len(n.entries), func(i int) bool {
+		return t.comparator(key, n.entries[i].key) >= 0
+	})
+	found := i < len(n.entries) && t.comparator(key, n.entries[i].key) == 0
+
+	return i, found
 }
 
 func (n *node[K, V]) insertSplit(pos int, e *entry[K, V]) (*entry[K, V], *node[K, V], *node[K, V]) {
