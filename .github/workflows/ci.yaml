@@ -37,7 +37,7 @@ jobs:
           cache: true
       - run: go test ./... -v -coverprofile=./coverage.txt -race -vet=off
       - name: Upload coverage data
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v3.1.3
         with:
           file: ./coverage.txt
           yml: ./codecov.yml
