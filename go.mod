@@ -59,7 +59,7 @@ require (
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/goccy/go-json v0.10.2
-	github.com/gofiber/fiber/v2 v2.44.0
+	github.com/gofiber/fiber/v2 v2.45.0
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
@@ -68,6 +68,6 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 )
