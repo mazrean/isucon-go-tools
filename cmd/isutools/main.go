@@ -11,12 +11,10 @@ import (
 	"github.com/mazrean/isucon-go-tools/analysers/http"
 	"github.com/mazrean/isucon-go-tools/analysers/importer"
 	"golang.org/x/tools/go/analysis/multichecker"
-	"golang.org/x/tools/go/analysis/passes/fieldalignment"
 )
 
 func main() {
 	multichecker.Main(
-		fieldalignment.Analyzer,
 		embed.Analyzer,
 		echo.Analyzer,
 		gin.Analyzer,
