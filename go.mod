@@ -57,7 +57,7 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.48.0
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/labstack/echo/v4 v4.10.2
+	github.com/labstack/echo/v4 v4.11.1
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/motoki317/sc v1.6.0
 	github.com/prometheus/client_model v0.3.0 // indirect
