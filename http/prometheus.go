@@ -56,6 +56,12 @@ var reqSizeHistogramVec = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Buckets:   reqSzBuckets,
 }, []string{"code", "method", "url"})
 
+var flowCounterVec = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: prometheusNamespace,
+	Subsystem: prometheusSubsystem,
+	Name:      "flow_total",
+}, []string{"source_method", "source_path", "target_method", "target_path"})
+
 // reqSize 大まかなリクエストサイズ
 func reqSize(req *http.Request) float64 {
 	size := 0.0

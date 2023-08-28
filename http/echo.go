@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -84,8 +85,23 @@ func EchoMetricsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		reqSz := reqSize(c.Request())
 
+		// シナリオ解析用メトリクス
+		flowCookie, err := c.Cookie("isutools_flow")
+		if err == nil {
+			flowMethod, flowPath, ok := strings.Cut(flowCookie.Value, ",")
+			if ok {
+				flowCounterVec.WithLabelValues(flowMethod, flowPath, method, path).Inc()
+			}
+		} else {
+			flowCookie = new(http.Cookie)
+			flowCookie.Name = "isutools_flow"
+		}
+		flowCookie.Value = fmt.Sprintf("%s,%s", method, path)
+		flowCookie.Expires = time.Now().Add(1 * time.Hour)
+		c.SetCookie(flowCookie)
+
 		start := time.Now()
-		err := next(c)
+		err = next(c)
 		reqDur := float64(time.Since(start)) / float64(time.Second)
 
 		// error handlerがDefaultHTTPErrorHandlerでない場合、正しくない可能性あり
