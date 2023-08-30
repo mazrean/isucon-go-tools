@@ -1,8 +1,10 @@
 package isuhttp
 
 import (
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -53,6 +55,16 @@ func GinMetricsMiddleware(c *gin.Context) {
 	method := c.Request.Method
 
 	reqSz := reqSize(c.Request)
+
+	// シナリオ解析用メトリクス
+	flowCookieValue, err := c.Cookie("isutools_flow")
+	if err == nil {
+		flowMethod, flowPath, ok := strings.Cut(flowCookieValue, ",")
+		if ok {
+			flowCounterVec.WithLabelValues(flowMethod, flowPath, method, path).Inc()
+		}
+	}
+	c.SetCookie("isutools_flow", fmt.Sprintf("%s,%s", method, path), int(1*time.Hour), "", "", false, true)
 
 	start := time.Now()
 	c.Next()
