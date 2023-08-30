@@ -2,9 +2,11 @@ package isuhttp
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/goccy/go-json"
@@ -56,6 +58,20 @@ func FiberMetricsMiddleware(next fiber.Handler) fiber.Handler {
 		method := c.Method()
 
 		reqSz := fastHTTPReqSize(c.Request())
+
+		// シナリオ解析用メトリクス
+		flowCookieValue := c.Cookies("isutools_flow")
+		if flowCookieValue != "" {
+			flowMethod, flowPath, ok := strings.Cut(flowCookieValue, ",")
+			if ok {
+				flowCounterVec.WithLabelValues(flowMethod, flowPath, method, path).Inc()
+			}
+		}
+		flowCookie := new(fiber.Cookie)
+		flowCookie.Name = "isutools_flow"
+		flowCookie.Value = fmt.Sprintf("%s,%s", method, path)
+		flowCookie.Expires = time.Now().Add(1 * time.Hour)
+		c.Cookie(flowCookie)
 
 		start := time.Now()
 		err := next(c)
