@@ -1,7 +1,9 @@
 package isuhttp
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	isutools "github.com/mazrean/isucon-go-tools"
@@ -98,6 +100,20 @@ func FastMetricsMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler
 		method := string(ctx.Method())
 
 		reqSz := fastHTTPReqSize(&ctx.Request)
+
+		// シナリオ解析用メトリクス
+		flowCookieValue := ctx.Request.Header.Cookie("isutools_flow")
+		if flowCookieValue != nil {
+			flowMethod, flowPath, ok := strings.Cut(string(flowCookieValue), ",")
+			if ok {
+				flowCounterVec.WithLabelValues(flowMethod, flowPath, method, path).Inc()
+			}
+		}
+		flowCookie := new(fasthttp.Cookie)
+		flowCookie.SetKey("isutools_flow")
+		flowCookie.SetValue(fmt.Sprintf("%s,%s", method, path))
+		flowCookie.SetExpire(time.Now().Add(1 * time.Hour))
+		ctx.Response.Header.SetCookie(flowCookie)
 
 		start := time.Now()
 		next(ctx)

@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	isutools "github.com/mazrean/isucon-go-tools"
@@ -122,6 +123,21 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 		method := req.Method
 
 		reqSz := reqSize(req)
+
+		// シナリオ解析用メトリクス
+		flowCookie, err := req.Cookie("isutools_flow")
+		if err == nil {
+			flowMethod, flowPath, ok := strings.Cut(flowCookie.Value, ",")
+			if ok {
+				flowCounterVec.WithLabelValues(flowMethod, flowPath, method, path).Inc()
+			}
+		} else {
+			flowCookie = new(http.Cookie)
+			flowCookie.Name = "isutools_flow"
+		}
+		flowCookie.Value = fmt.Sprintf("%s,%s", method, path)
+		flowCookie.Expires = time.Now().Add(1 * time.Hour)
+		http.SetCookie(res, flowCookie)
 
 		start := time.Now()
 		next.ServeHTTP(wrappedRes, req)
