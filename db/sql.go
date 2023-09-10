@@ -2,7 +2,6 @@ package isudb
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -14,34 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
-
-const (
-	prometheusNamespace = "isutools"
-	prometheusSubsystem = "db"
-)
-
-var (
-	enableRetry          = false
-	enableMyProfiler     = true
-	fixInterpolateParams = true
-	myprofilerInterval   = 1 * time.Second
-)
-
-func SetRetry(enable bool) {
-	enableRetry = enable
-}
-
-func SetMyProfiler(enable bool) {
-	enableMyProfiler = enable
-}
-
-func SetFixInterpolateParams(enable bool) {
-	fixInterpolateParams = enable
-}
-
-func SetMyProfilerInterval(interval time.Duration) {
-	myprofilerInterval = interval
-}
 
 func DBMetricsSetup[T interface {
 	Ping() error
@@ -55,19 +26,26 @@ func DBMetricsSetup[T interface {
 }](fn func(string, string) (T, error)) func(string, string) (T, error) {
 	return func(driverName string, dataSourceName string) (T, error) {
 		var addr string
-		if fixInterpolateParams && driverName == "mysql" {
-			config, err := mysql.ParseDSN(dataSourceName)
-			if err != nil {
-				log.Printf("failed to parse dsn: %v\n", err)
-				goto CONNECT
+		switch driverName {
+		case "mysql":
+			if fixInterpolateParams {
+				config, err := mysql.ParseDSN(dataSourceName)
+				if err != nil {
+					log.Printf("failed to parse dsn: %v\n", err)
+					goto CONNECT
+				}
+
+				if !config.InterpolateParams {
+					config.InterpolateParams = true
+					dataSourceName = config.FormatDSN()
+				}
+
+				addr = config.Addr
 			}
 
-			if !config.InterpolateParams {
-				config.InterpolateParams = true
-				dataSourceName = config.FormatDSN()
+			if isutools.Enable {
+				driverName = "isumysql"
 			}
-
-			addr = config.Addr
 		}
 
 	CONNECT:
@@ -205,10 +183,6 @@ func DBMetricsSetup[T interface {
 			}, func() float64 {
 				return float64(db.Stats().MaxIdleTimeClosed)
 			})
-
-			if enableMyProfiler {
-				go myprofiler(db, addr)
-			}
 		}
 
 		return db, err
@@ -252,97 +226,6 @@ type RegexpNormalizer struct {
 
 func (p *RegexpNormalizer) Normalize(q string) string {
 	return p.re.ReplaceAllString(q, p.subs)
-}
-
-func myprofiler(db Queryer, addr string) {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Printf("myprofiler panic: %v", err)
-		}
-	}()
-
-	regexpNormalizers = make([]*RegexpNormalizer, 0, len(regexpPairs))
-	for _, pair := range regexpPairs {
-		re, err := regexp.Compile(pair.target)
-		if err != nil {
-			log.Printf("failed to compile regexp: %s", err)
-			continue
-		}
-
-		regexpNormalizers = append(regexpNormalizers, &RegexpNormalizer{
-			re:   re,
-			subs: pair.subs,
-		})
-	}
-
-	vec := promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: prometheusNamespace,
-		Subsystem: prometheusSubsystem,
-		Name:      "query_count",
-		ConstLabels: map[string]string{
-			"addr": addr,
-		},
-	}, []string{"query"})
-
-	ticker := time.NewTicker(myprofilerInterval)
-	for range ticker.C {
-		queries, err := getRunningQueries(db)
-		if err != nil {
-			log.Printf("failed to get running queries: %s", err)
-			continue
-		}
-
-		queries = Normalize(queries)
-
-		for _, query := range queries {
-			if !utf8.ValidString(query) {
-				continue
-			}
-
-			vec.WithLabelValues(query).Inc()
-		}
-	}
-}
-
-func getRunningQueries(db Queryer) ([]string, error) {
-	query := "SHOW FULL PROCESSLIST"
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get running queries: %w", err)
-	}
-	defer rows.Close()
-
-	var queries []string
-	cs, err := rows.Columns()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get columns: %w", err)
-	}
-	lcs := len(cs)
-	if lcs != 8 && lcs != 9 {
-		return nil, fmt.Errorf("unexpected column count: %d", lcs)
-	}
-	for rows.Next() {
-		var (
-			user, host, db, command, state, info sql.NullString
-			id, time                             int
-		)
-		if lcs == 8 {
-			err = rows.Scan(&id, &user, &host, &db, &command, &time, &state, &info)
-		} else {
-			var progress interface{}
-			err = rows.Scan(&id, &user, &host, &db, &command, &time, &state, &info, &progress)
-		}
-		if err != nil {
-			log.Printf("failed to scan row: %s\n", err)
-			continue
-		}
-
-		if info.Valid && info.String != "" && info.String != query {
-			queries = append(queries, info.String)
-		}
-	}
-
-	return queries, nil
 }
 
 func Normalize(queries []string) []string {
