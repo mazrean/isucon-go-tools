@@ -1,0 +1,31 @@
+{
+  "package": "isudbgen",
+  "func": "LimitOptionalStmt",
+  "imports": [
+    {
+      "path": "database/sql/driver"
+    }
+  ],
+  "requiredInterface": {
+    "package": "driver",
+    "name": "Stmt"
+  },
+  "optionalInterfaces": [
+    {
+      "package": "driver",
+      "name": "ColumnConverter"
+    },
+    {
+      "package": "driver",
+      "name": "NamedValueChecker"
+    },
+    {
+      "package": "driver",
+      "name": "StmtExecContext"
+    },
+    {
+      "package": "driver",
+      "name": "StmtQueryContext"
+    }
+  ]
+}

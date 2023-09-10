@@ -1,0 +1,19 @@
+{
+  "package": "isudbgen",
+  "func": "LimitOptionalDriver",
+  "imports": [
+    {
+      "path": "database/sql/driver"
+    }
+  ],
+  "requiredInterface": {
+    "package": "driver",
+    "name": "Driver"
+  },
+  "optionalInterfaces": [
+    {
+      "package": "driver",
+      "name": "DriverContext"
+    }
+  ]
+}
