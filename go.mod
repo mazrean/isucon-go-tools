@@ -1,6 +1,6 @@
 module github.com/mazrean/isucon-go-tools
 
-go 1.19
+go 1.21.0
 
 require (
 	github.com/google/uuid v1.3.1
@@ -61,6 +61,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
+	github.com/mazrean/iwrapper v0.0.0
 	github.com/motoki317/sc v1.6.0
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
