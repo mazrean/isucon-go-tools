@@ -12,18 +12,18 @@ func init() {
 
 type mysqlSegmentBuilder struct{}
 
-func (mysqlSegmentBuilder) Driver() string {
+func (mysqlSegmentBuilder) driver() string {
 	return "mysql"
 }
 
-func (msb mysqlSegmentBuilder) ParseDSN(dsn string) *measureSegment {
+func (msb mysqlSegmentBuilder) parseDSN(dsn string) *measureSegment {
 	cfg, err := mysql.ParseDSN(dsn)
 	if err != nil {
 		panic(err)
 	}
 
 	return &measureSegment{
-		driver: msb.Driver(),
+		driver: msb.driver(),
 		addr:   cfg.Addr,
 	}
 }

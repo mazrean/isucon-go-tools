@@ -12,13 +12,13 @@ func init() {
 
 type sqlite3SegmentBuilder struct{}
 
-func (sqlite3SegmentBuilder) Driver() string {
+func (sqlite3SegmentBuilder) driver() string {
 	return "sqlite3"
 }
 
-func (ssb sqlite3SegmentBuilder) ParseDSN(dsn string) *measureSegment {
+func (ssb sqlite3SegmentBuilder) parseDSN(dsn string) *measureSegment {
 	return &measureSegment{
-		driver: ssb.Driver(),
+		driver: ssb.driver(),
 		addr:   dsn,
 	}
 }

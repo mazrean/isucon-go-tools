@@ -10,14 +10,14 @@ import (
 
 type wrappedDriver struct {
 	driver.Driver
-	segmentBuilder SegmentBuilder
+	segmentBuilder segmentBuilder
 }
 
-func wrapDriver(d driver.Driver, segmentBuilder SegmentBuilder) driver.Driver {
+func wrapDriver(d driver.Driver, segBuilder segmentBuilder) driver.Driver {
 	return isudbgen.DriverWrapper(d, func(d driver.Driver) isudbgen.Driver {
 		return &wrappedDriver{
 			Driver:         d,
-			segmentBuilder: segmentBuilder,
+			segmentBuilder: segBuilder,
 		}
 	})
 }
@@ -28,7 +28,7 @@ func (wd *wrappedDriver) Open(name string) (driver.Conn, error) {
 		return nil, err
 	}
 
-	return wrapConn(conn, wd.segmentBuilder.ParseDSN(name)), nil
+	return wrapConn(conn, wd.segmentBuilder.parseDSN(name)), nil
 }
 
 func (wd *wrappedDriver) OpenConnector(name string) (driver.Connector, error) {
@@ -37,7 +37,7 @@ func (wd *wrappedDriver) OpenConnector(name string) (driver.Connector, error) {
 		return nil, err
 	}
 
-	return wrapConnector(conn, wd, wd.segmentBuilder.ParseDSN(name)), nil
+	return wrapConnector(conn, wd, wd.segmentBuilder.parseDSN(name)), nil
 }
 
 type wrappedConn struct {
@@ -188,16 +188,19 @@ func (ws *wrappedStmt) QueryContext(ctx context.Context, args []driver.NamedValu
 }
 
 type measureSegment struct {
-	driver string
-	addr   string
+	driver     string
+	addr       string
+	normalizer func(string) string
 }
 
-type SegmentBuilder interface {
-	Driver() string
-	ParseDSN(dsn string) *measureSegment
+type segmentBuilder interface {
+	driver() string
+	parseDSN(dsn string) *measureSegment
 }
 
 func (m *measureSegment) setQueryResult(query string, queryDur float64) {
+	query = m.normalizeQuery(query)
+
 	if enableQueryTrace {
 		queryCountVec.WithLabelValues(m.driver, m.addr, query).Inc()
 		queryDurHistogramVec.WithLabelValues(m.driver, m.addr, query).Observe(queryDur)
@@ -205,6 +208,8 @@ func (m *measureSegment) setQueryResult(query string, queryDur float64) {
 }
 
 func measureQuery[T any](segment *measureSegment, query string, f func() (T, error)) (T, error) {
+	query = segment.normalizeQuery(query)
+
 	start := time.Now()
 	result, err := f()
 	queryDur := float64(time.Since(start)) / float64(time.Second)
@@ -212,4 +217,12 @@ func measureQuery[T any](segment *measureSegment, query string, f func() (T, err
 	segment.setQueryResult(query, queryDur)
 
 	return result, err
+}
+
+func (m *measureSegment) normalizeQuery(query string) string {
+	if m.normalizer != nil {
+		return m.normalizer(query)
+	}
+
+	return query
 }
