@@ -60,6 +60,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/labstack/echo/v4 v4.11.1
+	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mazrean/iwrapper v0.0.0
 	github.com/motoki317/sc v1.6.0
