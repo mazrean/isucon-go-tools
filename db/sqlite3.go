@@ -2,6 +2,8 @@ package isudb
 
 import (
 	"database/sql"
+	"regexp"
+	"sync"
 
 	"github.com/mattn/go-sqlite3"
 )
@@ -18,7 +20,51 @@ func (sqlite3SegmentBuilder) driver() string {
 
 func (ssb sqlite3SegmentBuilder) parseDSN(dsn string) *measureSegment {
 	return &measureSegment{
-		driver: ssb.driver(),
-		addr:   dsn,
+		driver:     ssb.driver(),
+		addr:       dsn,
+		normalizer: ssb.normalizer,
 	}
+}
+
+var (
+	sqliteReList = []struct {
+		re *regexp.Regexp
+		to string
+	}{{
+		re: regexp.MustCompile(`((?:\?(\d*)|[@:$][0-9A-Fa-f]+)\s*,\s*)+`),
+		to: "..., ",
+	}, {
+		re: regexp.MustCompile(`(\(\.\.\., ((\?[0-9]*)|[@:$][0-9A-Fa-f]+)\)\s*,\s*)+`),
+		to: "..., ",
+	}}
+	sqlite3NormalizeCacheLocker = &sync.RWMutex{}
+	sqlite3NormalizeCache       = make(map[string]string, 50)
+)
+
+func (sqlite3SegmentBuilder) normalizer(query string) string {
+	var (
+		normalizedQuery string
+		ok              bool
+	)
+	func() {
+		sqlite3NormalizeCacheLocker.RLock()
+		defer sqlite3NormalizeCacheLocker.RUnlock()
+		normalizedQuery, ok = sqlite3NormalizeCache[query]
+	}()
+	if ok {
+		return normalizedQuery
+	}
+
+	normalizedQuery = query
+	for _, re := range sqliteReList {
+		normalizedQuery = re.re.ReplaceAllString(normalizedQuery, re.to)
+	}
+
+	func() {
+		sqlite3NormalizeCacheLocker.Lock()
+		defer sqlite3NormalizeCacheLocker.Unlock()
+		sqlite3NormalizeCache[query] = normalizedQuery
+	}()
+
+	return normalizedQuery
 }
