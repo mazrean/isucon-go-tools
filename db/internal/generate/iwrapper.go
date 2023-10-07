@@ -1,4 +1,4 @@
-package isudb
+package isudbgen
 
 //go:generate go run github.com/mazrean/iwrapper -src=$GOFILE -dst=iwrapper_gen.go
 

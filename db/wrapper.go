@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql/driver"
 	"time"
+
+	isudbgen "github.com/mazrean/isucon-go-tools/db/internal/generate"
 )
 
 type wrappedDriver struct {
@@ -12,7 +14,7 @@ type wrappedDriver struct {
 }
 
 func wrapDriver(d driver.Driver, segmentBuilder SegmentBuilder) driver.Driver {
-	return DriverWrapper(d, func(d driver.Driver) Driver {
+	return isudbgen.DriverWrapper(d, func(d driver.Driver) isudbgen.Driver {
 		return &wrappedDriver{
 			Driver:         d,
 			segmentBuilder: segmentBuilder,
@@ -44,7 +46,7 @@ type wrappedConn struct {
 }
 
 func wrapConn(conn driver.Conn, segment *measureSegment) driver.Conn {
-	return ConnWrapper(conn, func(c driver.Conn) Conn {
+	return isudbgen.ConnWrapper(conn, func(c driver.Conn) isudbgen.Conn {
 		return &wrappedConn{
 			Conn:    conn,
 			segment: segment,
@@ -144,7 +146,7 @@ type wrappedStmt struct {
 }
 
 func wrapStmt(stmt driver.Stmt, segment *measureSegment, query string) driver.Stmt {
-	return StmtWrapper(stmt, func(s driver.Stmt) Stmt {
+	return isudbgen.StmtWrapper(stmt, func(s driver.Stmt) isudbgen.Stmt {
 		return &wrappedStmt{
 			Stmt:    s,
 			segment: segment,
