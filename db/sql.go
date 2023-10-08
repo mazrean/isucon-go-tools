@@ -2,12 +2,10 @@ package isudb
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
-	"regexp"
-	"strings"
+	"strconv"
+	"sync/atomic"
 	"time"
-	"unicode/utf8"
 
 	"github.com/go-sql-driver/mysql"
 	isutools "github.com/mazrean/isucon-go-tools"
@@ -15,32 +13,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-const (
-	prometheusNamespace = "isutools"
-	prometheusSubsystem = "db"
-)
+var connectionID = &atomic.Uint64{}
 
-var (
-	enableRetry          = false
-	enableMyProfiler     = true
-	fixInterpolateParams = true
-	myprofilerInterval   = 1 * time.Second
-)
-
-func SetRetry(enable bool) {
-	enableRetry = enable
-}
-
-func SetMyProfiler(enable bool) {
-	enableMyProfiler = enable
-}
-
-func SetFixInterpolateParams(enable bool) {
-	fixInterpolateParams = enable
-}
-
-func SetMyProfilerInterval(interval time.Duration) {
-	myprofilerInterval = interval
+func init() {
+	connectionID.Store(0)
 }
 
 func DBMetricsSetup[T interface {
@@ -54,20 +30,36 @@ func DBMetricsSetup[T interface {
 	Stats() sql.DBStats
 }](fn func(string, string) (T, error)) func(string, string) (T, error) {
 	return func(driverName string, dataSourceName string) (T, error) {
+		openDriverName := driverName
 		var addr string
-		if fixInterpolateParams && driverName == "mysql" {
-			config, err := mysql.ParseDSN(dataSourceName)
-			if err != nil {
-				log.Printf("failed to parse dsn: %v\n", err)
-				goto CONNECT
+		switch driverName {
+		case "mysql":
+			if fixInterpolateParams {
+				config, err := mysql.ParseDSN(dataSourceName)
+				if err != nil {
+					log.Printf("failed to parse dsn: %v\n", err)
+					goto CONNECT
+				}
+
+				if !config.InterpolateParams {
+					config.InterpolateParams = true
+					dataSourceName = config.FormatDSN()
+				}
+
+				addr = config.Addr
 			}
 
-			if !config.InterpolateParams {
-				config.InterpolateParams = true
-				dataSourceName = config.FormatDSN()
+			if isutools.Enable {
+				openDriverName = "isumysql"
 			}
-
-			addr = config.Addr
+		case "sqlite3":
+			if isutools.Enable {
+				openDriverName = "isusqlite3"
+			}
+		case "postgres":
+			if isutools.Enable {
+				openDriverName = "isupostgres"
+			}
 		}
 
 	CONNECT:
@@ -82,7 +74,7 @@ func DBMetricsSetup[T interface {
 			)
 			for first || err != nil {
 				first = false
-				db, err = fn(driverName, dataSourceName)
+				db, err = fn(openDriverName, dataSourceName)
 				if err != nil {
 					return db, err
 				}
@@ -93,7 +85,7 @@ func DBMetricsSetup[T interface {
 				}
 			}
 		} else {
-			db, err = fn(driverName, dataSourceName)
+			db, err = fn(openDriverName, dataSourceName)
 			if err != nil {
 				return db, err
 			}
@@ -110,12 +102,17 @@ func DBMetricsSetup[T interface {
 		db.SetConnMaxIdleTime(0)
 
 		if isutools.Enable {
+			connID := connectionID.Add(1)
+			strConnID := strconv.FormatUint(connID, 10)
+
 			promauto.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: prometheusNamespace,
 				Subsystem: prometheusSubsystem,
 				Name:      "max_open_connections",
 				ConstLabels: map[string]string{
-					"addr": addr,
+					"driver":        driverName,
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().OpenConnections)
@@ -126,8 +123,10 @@ func DBMetricsSetup[T interface {
 				Subsystem: prometheusSubsystem,
 				Name:      "connection_pool",
 				ConstLabels: map[string]string{
-					"status": "idle",
-					"addr":   addr,
+					"driver":        driverName,
+					"status":        "idle",
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().Idle)
@@ -137,8 +136,10 @@ func DBMetricsSetup[T interface {
 				Subsystem: prometheusSubsystem,
 				Name:      "connection_pool",
 				ConstLabels: map[string]string{
-					"status": "open",
-					"addr":   addr,
+					"driver":        driverName,
+					"status":        "open",
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().OpenConnections)
@@ -148,8 +149,10 @@ func DBMetricsSetup[T interface {
 				Subsystem: prometheusSubsystem,
 				Name:      "connection_pool",
 				ConstLabels: map[string]string{
-					"status": "in_use",
-					"addr":   addr,
+					"driver":        driverName,
+					"status":        "in_use",
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().InUse)
@@ -160,7 +163,9 @@ func DBMetricsSetup[T interface {
 				Subsystem: prometheusSubsystem,
 				Name:      "wait_count",
 				ConstLabels: map[string]string{
-					"addr": addr,
+					"driver":        driverName,
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().WaitCount)
@@ -170,7 +175,9 @@ func DBMetricsSetup[T interface {
 				Subsystem: prometheusSubsystem,
 				Name:      "wait_duration",
 				ConstLabels: map[string]string{
-					"addr": addr,
+					"driver":        driverName,
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().WaitDuration)
@@ -180,7 +187,9 @@ func DBMetricsSetup[T interface {
 				Subsystem: prometheusSubsystem,
 				Name:      "max_idle_closed",
 				ConstLabels: map[string]string{
-					"addr": addr,
+					"driver":        driverName,
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().MaxOpenConnections)
@@ -190,7 +199,9 @@ func DBMetricsSetup[T interface {
 				Subsystem: prometheusSubsystem,
 				Name:      "max_lifetime_closed",
 				ConstLabels: map[string]string{
-					"addr": addr,
+					"driver":        driverName,
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().MaxLifetimeClosed)
@@ -200,184 +211,15 @@ func DBMetricsSetup[T interface {
 				Subsystem: prometheusSubsystem,
 				Name:      "max_idle_time_closed",
 				ConstLabels: map[string]string{
-					"addr": addr,
+					"driver":        driverName,
+					"addr":          addr,
+					"connection_id": strConnID,
 				},
 			}, func() float64 {
 				return float64(db.Stats().MaxIdleTimeClosed)
 			})
-
-			if enableMyProfiler {
-				go myprofiler(db, addr)
-			}
 		}
 
 		return db, err
 	}
-}
-
-type Queryer interface {
-	Query(query string, args ...any) (*sql.Rows, error)
-}
-
-type RegexpPair struct {
-	target string
-	subs   string
-}
-
-var regexpPairs = []RegexpPair{
-	{
-		target: `[+\-]{0,1}\b\d+\b`,
-		subs:   "N",
-	}, {
-		target: `\b0x[0-9A-Fa-f]+\b`,
-		subs:   "0xN",
-	}, {
-		target: `'[^']+'`,
-		subs:   "S",
-	}, {
-		target: `"[^"]+"`,
-		subs:   "S",
-	}, {
-		target: `(([NS]\s*,\s*){4,})`,
-		subs:   "...",
-	},
-}
-
-var regexpNormalizers []*RegexpNormalizer
-
-type RegexpNormalizer struct {
-	re   *regexp.Regexp
-	subs string
-}
-
-func (p *RegexpNormalizer) Normalize(q string) string {
-	return p.re.ReplaceAllString(q, p.subs)
-}
-
-func myprofiler(db Queryer, addr string) {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Printf("myprofiler panic: %v", err)
-		}
-	}()
-
-	regexpNormalizers = make([]*RegexpNormalizer, 0, len(regexpPairs))
-	for _, pair := range regexpPairs {
-		re, err := regexp.Compile(pair.target)
-		if err != nil {
-			log.Printf("failed to compile regexp: %s", err)
-			continue
-		}
-
-		regexpNormalizers = append(regexpNormalizers, &RegexpNormalizer{
-			re:   re,
-			subs: pair.subs,
-		})
-	}
-
-	vec := promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: prometheusNamespace,
-		Subsystem: prometheusSubsystem,
-		Name:      "query_count",
-		ConstLabels: map[string]string{
-			"addr": addr,
-		},
-	}, []string{"query"})
-
-	ticker := time.NewTicker(myprofilerInterval)
-	for range ticker.C {
-		queries, err := getRunningQueries(db)
-		if err != nil {
-			log.Printf("failed to get running queries: %s", err)
-			continue
-		}
-
-		queries = Normalize(queries)
-
-		for _, query := range queries {
-			if !utf8.ValidString(query) {
-				continue
-			}
-
-			vec.WithLabelValues(query).Inc()
-		}
-	}
-}
-
-func getRunningQueries(db Queryer) ([]string, error) {
-	query := "SHOW FULL PROCESSLIST"
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get running queries: %w", err)
-	}
-	defer rows.Close()
-
-	var queries []string
-	cs, err := rows.Columns()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get columns: %w", err)
-	}
-	lcs := len(cs)
-	if lcs != 8 && lcs != 9 {
-		return nil, fmt.Errorf("unexpected column count: %d", lcs)
-	}
-	for rows.Next() {
-		var (
-			user, host, db, command, state, info sql.NullString
-			id, time                             int
-		)
-		if lcs == 8 {
-			err = rows.Scan(&id, &user, &host, &db, &command, &time, &state, &info)
-		} else {
-			var progress interface{}
-			err = rows.Scan(&id, &user, &host, &db, &command, &time, &state, &info, &progress)
-		}
-		if err != nil {
-			log.Printf("failed to scan row: %s\n", err)
-			continue
-		}
-
-		if info.Valid && info.String != "" && info.String != query {
-			queries = append(queries, info.String)
-		}
-	}
-
-	return queries, nil
-}
-
-func Normalize(queries []string) []string {
-	normalized := make([]string, 0, len(queries))
-	for _, query := range queries {
-		for _, trimString := range trimStrings {
-			query = strings.Trim(query, trimString)
-		}
-		query = strings.TrimFunc(query, (&Trimer{}).TrimFunc)
-
-		for _, regexpNormalizer := range regexpNormalizers {
-			query = regexpNormalizer.Normalize(query)
-		}
-
-		normalized = append(normalized, query)
-	}
-
-	return normalized
-}
-
-var trimStrings = []string{`\'`, `\"`}
-
-type Trimer struct {
-	lastChar rune
-}
-
-func (tr *Trimer) TrimFunc(c rune) bool {
-	if tr.lastChar == ' ' && c == ' ' {
-		return true
-	}
-
-	if !utf8.ValidRune(c) {
-		return true
-	}
-
-	tr.lastChar = c
-	return false
 }
