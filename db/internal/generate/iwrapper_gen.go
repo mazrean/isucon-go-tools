@@ -49,114 +49,86 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped}
 	case 0b10:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+		}{wrapped, wrapped}
 	case 0b11:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+		}{wrapped, wrapped}
 	case 0b101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+		}{wrapped, wrapped, wrapped}
 	case 0b111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+		}{wrapped, wrapped}
 	case 0b1001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b1010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+		}{wrapped, wrapped, wrapped}
 	case 0b1011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+		}{wrapped, wrapped, wrapped}
 	case 0b1101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.ExecerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1111:
 		return struct {
 			driver.Conn
@@ -164,127 +136,110 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.NamedValueChecker
+		}{wrapped, wrapped}
 	case 0b10001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b10010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.NamedValueChecker
+		}{wrapped, wrapped, wrapped}
 	case 0b10011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.NamedValueChecker
+		}{wrapped, wrapped, wrapped}
 	case 0b10101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.NamedValueChecker
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.NamedValueChecker
+		}{wrapped, wrapped, wrapped}
 	case 0b11001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b11110:
+		return struct {
+			driver.Conn
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b11110:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11111:
 		return struct {
 			driver.Conn
@@ -293,126 +248,110 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b100000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Pinger
+		}{wrapped, wrapped}
 	case 0b100001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b100010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Pinger
+		}{wrapped, wrapped, wrapped}
 	case 0b100011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b100100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.Pinger
+		}{wrapped, wrapped, wrapped}
 	case 0b100101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b100110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b100111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b101000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.Pinger
+		}{wrapped, wrapped, wrapped}
 	case 0b101001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b101010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b101011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b101100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b101101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b101110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.ExecerContext
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b101111:
 		return struct {
 			driver.Conn
@@ -420,127 +359,126 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b110000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.Pinger
+		}{wrapped, wrapped, wrapped}
 	case 0b110001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b110010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.NamedValueChecker
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b110011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b110100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b110101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b110110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b110111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b111000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b111001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b111010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b111011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b111100:
+		return struct {
+			driver.Conn
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b111100:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b111101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b111110:
+		return struct {
+			driver.Conn
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b111110:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b111111:
 		return struct {
 			driver.Conn
@@ -550,125 +488,110 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1000000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Queryer
+		}{wrapped, wrapped}
 	case 0b1000001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b1000010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Queryer
+		}{wrapped, wrapped, wrapped}
 	case 0b1000011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1000100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.Queryer
+		}{wrapped, wrapped, wrapped}
 	case 0b1000101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1000110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1000111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1001000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.Queryer
+		}{wrapped, wrapped, wrapped}
 	case 0b1001001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1001010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1001011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1001100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1001101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1001110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.ExecerContext
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1001111:
 		return struct {
 			driver.Conn
@@ -676,127 +599,126 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1010000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.Queryer
+		}{wrapped, wrapped, wrapped}
 	case 0b1010001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1010010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.NamedValueChecker
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1010011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1010100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1010101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1010110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1010111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1011000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1011001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1011010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1011011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1011100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1011101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b1011110:
+		return struct {
+			driver.Conn
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b1011110:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1011111:
 		return struct {
 			driver.Conn
@@ -805,126 +727,126 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1100000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped}
 	case 0b1100001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1100010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1100011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1100100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1100101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1100110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1100111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1101000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1101001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1101010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1101011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1101100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1101101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1101110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1101111:
 		return struct {
 			driver.Conn
@@ -932,127 +854,142 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1110000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1110001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1110010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1110011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1110100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1110101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1110110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1110111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b1111000:
+		return struct {
+			driver.Conn
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b1111000:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1111001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1111010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1111011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b1111100:
+		return struct {
+			driver.Conn
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b1111100:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1111101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b1111110:
+		return struct {
+			driver.Conn
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b1111110:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b1111111:
 		return struct {
 			driver.Conn
@@ -1063,124 +1000,110 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
-			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10000000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.QueryerContext
+		}{wrapped, wrapped}
 	case 0b10000001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b10000010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped}
 	case 0b10000011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10000100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped}
 	case 0b10000101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10000110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10000111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10001000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped}
 	case 0b10001001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10001010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10001011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10001100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10001101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10001110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.ExecerContext
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10001111:
 		return struct {
 			driver.Conn
@@ -1188,127 +1111,126 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10010000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped}
 	case 0b10010001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10010010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.NamedValueChecker
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10010011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10010100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.NamedValueChecker
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10010101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10010110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.NamedValueChecker
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10010111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10011000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10011001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10011010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10011011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10011100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10011101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b10011110:
+		return struct {
+			driver.Conn
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b10011110:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10011111:
 		return struct {
 			driver.Conn
@@ -1317,126 +1239,126 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10100000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped}
 	case 0b10100001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10100010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10100011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10100100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10100101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10100110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10100111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10101000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10101001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10101010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10101011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10101100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10101101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10101110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.ExecerContext
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10101111:
 		return struct {
 			driver.Conn
@@ -1444,127 +1366,142 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10110000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b10110001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10110010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10110011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10110100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10110101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10110110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10110111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10111000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10111001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10111010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10111011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b10111100:
+		return struct {
+			driver.Conn
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b10111100:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10111101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b10111110:
+		return struct {
+			driver.Conn
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b10111110:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b10111111:
 		return struct {
 			driver.Conn
@@ -1574,125 +1511,126 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
-			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11000000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped}
 	case 0b11000001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11000010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11000011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11000100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11000101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11000110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11000111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11001000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11001001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11001010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11001011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11001100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11001101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11001110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.ExecerContext
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11001111:
 		return struct {
 			driver.Conn
@@ -1700,127 +1638,142 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11010000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11010001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11010010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.NamedValueChecker
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11010011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11010100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11010101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11010110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11010111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11011000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11011001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11011010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11011011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11011100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11011101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b11011110:
+		return struct {
+			driver.Conn
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b11011110:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11011111:
 		return struct {
 			driver.Conn
@@ -1829,126 +1782,142 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
-			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11100000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b11100001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11100010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11100011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11100100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11100101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11100110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11100111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11101000:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11101001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11101010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11101011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11101100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11101101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
-			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11101110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11101111:
 		return struct {
 			driver.Conn
@@ -1956,115 +1925,150 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b11110000:
+		return struct {
+			driver.Conn
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b11110000:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11110001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11110010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11110011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
-			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11110100:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11110101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
 			driver.Execer
-			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11110110:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11110111:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
 			driver.Execer
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b11111000:
+		return struct {
+			driver.Conn
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b11111000:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11111001:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
-			driver.ConnPrepareContext
-			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11111010:
 		return struct {
 			driver.Conn
-		}{wrapped}
+			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11111011:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
 			driver.ConnPrepareContext
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b11111100:
+		return struct {
+			driver.Conn
 			driver.Execer
 			driver.ExecerContext
 			driver.NamedValueChecker
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b11111100:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11111101:
 		return struct {
 			driver.Conn
 			driver.ConnBeginTx
+			driver.Execer
+			driver.ExecerContext
+			driver.NamedValueChecker
+			driver.Pinger
+			driver.Queryer
+			driver.QueryerContext
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
+	case 0b11111110:
+		return struct {
+			driver.Conn
 			driver.ConnPrepareContext
 			driver.Execer
 			driver.ExecerContext
@@ -2072,11 +2076,7 @@ func ConnWrapper(v driver.Conn, wrapper func(driver.Conn) Conn) driver.Conn {
 			driver.Pinger
 			driver.Queryer
 			driver.QueryerContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
-	case 0b11111110:
-		return struct {
-			driver.Conn
-		}{wrapped}
+		}{wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped, wrapped}
 	case 0b11111111:
 		return struct {
 			driver.Conn
@@ -2142,86 +2142,86 @@ func StmtWrapper(v driver.Stmt, wrapper func(driver.Stmt) Stmt) driver.Stmt {
 		return struct {
 			driver.Stmt
 			driver.ColumnConverter
-			driver.NamedValueChecker
-			driver.StmtExecContext
-			driver.StmtQueryContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped}
 	case 0b10:
 		return struct {
 			driver.Stmt
-		}{wrapped}
+			driver.NamedValueChecker
+		}{wrapped, wrapped}
 	case 0b11:
 		return struct {
 			driver.Stmt
 			driver.ColumnConverter
 			driver.NamedValueChecker
-			driver.StmtExecContext
-			driver.StmtQueryContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b100:
 		return struct {
 			driver.Stmt
-		}{wrapped}
+			driver.StmtExecContext
+		}{wrapped, wrapped}
 	case 0b101:
 		return struct {
 			driver.Stmt
 			driver.ColumnConverter
-			driver.NamedValueChecker
 			driver.StmtExecContext
-			driver.StmtQueryContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b110:
 		return struct {
 			driver.Stmt
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.StmtExecContext
+		}{wrapped, wrapped, wrapped}
 	case 0b111:
 		return struct {
 			driver.Stmt
 			driver.ColumnConverter
 			driver.NamedValueChecker
 			driver.StmtExecContext
-			driver.StmtQueryContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1000:
 		return struct {
 			driver.Stmt
-		}{wrapped}
+			driver.StmtQueryContext
+		}{wrapped, wrapped}
 	case 0b1001:
 		return struct {
 			driver.Stmt
 			driver.ColumnConverter
-			driver.NamedValueChecker
-			driver.StmtExecContext
 			driver.StmtQueryContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped}
 	case 0b1010:
 		return struct {
 			driver.Stmt
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.StmtQueryContext
+		}{wrapped, wrapped, wrapped}
 	case 0b1011:
 		return struct {
 			driver.Stmt
 			driver.ColumnConverter
 			driver.NamedValueChecker
-			driver.StmtExecContext
 			driver.StmtQueryContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1100:
 		return struct {
 			driver.Stmt
-		}{wrapped}
+			driver.StmtExecContext
+			driver.StmtQueryContext
+		}{wrapped, wrapped, wrapped}
 	case 0b1101:
 		return struct {
 			driver.Stmt
 			driver.ColumnConverter
-			driver.NamedValueChecker
 			driver.StmtExecContext
 			driver.StmtQueryContext
-		}{wrapped, wrapped, wrapped, wrapped, wrapped}
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1110:
 		return struct {
 			driver.Stmt
-		}{wrapped}
+			driver.NamedValueChecker
+			driver.StmtExecContext
+			driver.StmtQueryContext
+		}{wrapped, wrapped, wrapped, wrapped}
 	case 0b1111:
 		return struct {
 			driver.Stmt
