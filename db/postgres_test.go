@@ -6,26 +6,22 @@ import (
 	"testing"
 )
 
-func BenchmarkSQLite3Normalizer(b *testing.B) {
-	ssb := sqlite3SegmentBuilder{}
+func BenchmarkPostgresNormalizer(b *testing.B) {
+	psb := postgresSegmentBuilder{}
 
-	queryPart := fmt.Sprintf("(%s?2)", strings.Repeat("?1, ", 5))
+	queryPart := fmt.Sprintf("(%s$2)", strings.Repeat("$1, ", 5))
 	query := fmt.Sprintf("INSERT INTO users (name, email, password, salt, created_at, updated_at) VALUES %s", strings.Repeat(queryPart+", ", 999)+queryPart)
 
 	for i := 0; i < b.N; i++ {
-		ssb.normalizer(query)
+		psb.normalizer(query)
 	}
 }
 
-func TestSQLite3Normalizer(t *testing.T) {
-	ssb := sqlite3SegmentBuilder{}
+func TestPostgresNormalizer(t *testing.T) {
+	psb := postgresSegmentBuilder{}
 
 	tests := []string{
-		"?",
-		"?1234",
-		":a1",
-		"@a1",
-		"$a1",
+		"$1",
 	}
 
 	for _, test := range tests {
@@ -36,7 +32,7 @@ func TestSQLite3Normalizer(t *testing.T) {
 			queryPart := fmt.Sprintf("(%s%s)", strings.Repeat(fmt.Sprintf("%s, ", test), 5), test)
 			query := fmt.Sprintf("INSERT INTO users (name, email, password, salt, created_at, updated_at) VALUES %s", strings.Repeat(queryPart+", ", 999)+queryPart)
 
-			normalizedQuery := ssb.normalizer(query)
+			normalizedQuery := psb.normalizer(query)
 
 			if normalizedQuery != "INSERT INTO users (name, email, password, salt, created_at, updated_at) VALUES ..., (..., ?)" {
 				t.Errorf("unexpected query: %s", normalizedQuery)

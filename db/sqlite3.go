@@ -31,10 +31,10 @@ var (
 		re *regexp.Regexp
 		to string
 	}{{
-		re: regexp.MustCompile(`((?:\?(\d*)|[@:$][0-9A-Fa-f]+)\s*,\s*)+`),
-		to: "..., ",
+		re: regexp.MustCompile(`((?:\?(\d*)|[@:$][0-9A-Fa-f]+)\s*,\s*)+(?:\?(\d*)|[@:$][0-9A-Fa-f]+)`),
+		to: "..., ?",
 	}, {
-		re: regexp.MustCompile(`(\(\.\.\., ((\?[0-9]*)|[@:$][0-9A-Fa-f]+)\)\s*,\s*)+`),
+		re: regexp.MustCompile(`(\(\.\.\., \?\)\s*,\s*)+`),
 		to: "..., ",
 	}}
 	sqlite3NormalizeCacheLocker = &sync.RWMutex{}

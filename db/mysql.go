@@ -39,7 +39,7 @@ var (
 		re: regexp.MustCompile(`(\?\s*,\s*)+`),
 		to: "..., ",
 	}, {
-		re: regexp.MustCompile(`(\(..., \?\)\s*,\s*)+`),
+		re: regexp.MustCompile(`(\(\.\.\., \?\)\s*,\s*)+`),
 		to: "..., ",
 	}}
 	mysqlNormalizeCacheLocker = &sync.RWMutex{}

@@ -56,6 +56,10 @@ func DBMetricsSetup[T interface {
 			if isutools.Enable {
 				openDriverName = "isusqlite3"
 			}
+		case "postgres":
+			if isutools.Enable {
+				openDriverName = "isupostgres"
+			}
 		}
 
 	CONNECT:
