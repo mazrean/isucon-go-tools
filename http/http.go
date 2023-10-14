@@ -1,7 +1,9 @@
 package isuhttp
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strconv"
@@ -9,6 +11,7 @@ import (
 	"time"
 
 	isutools "github.com/mazrean/isucon-go-tools"
+	isuhttpgen "github.com/mazrean/isucon-go-tools/http/internal/generate"
 )
 
 func ListenAndServe(addr string, handler http.Handler) error {
@@ -85,6 +88,10 @@ func listen(addr string) (net.Listener, error) {
 
 type responseWriterWithMetrics struct {
 	http.ResponseWriter
+	reponseWriterMetrics
+}
+
+type reponseWriterMetrics struct {
 	statusCode int
 	resSize    float64
 }
@@ -92,8 +99,10 @@ type responseWriterWithMetrics struct {
 func newResponseWriterWithMetrics(w http.ResponseWriter) *responseWriterWithMetrics {
 	return &responseWriterWithMetrics{
 		ResponseWriter: w,
-		statusCode:     -1,
-		resSize:        0,
+		reponseWriterMetrics: reponseWriterMetrics{
+			statusCode: -1,
+			resSize:    0,
+		},
 	}
 }
 
@@ -109,6 +118,22 @@ func (r *responseWriterWithMetrics) Write(b []byte) (int, error) {
 	return n, err
 }
 
+func (r *responseWriterWithMetrics) CloseNotify() <-chan bool {
+	return r.ResponseWriter.(http.CloseNotifier).CloseNotify()
+}
+
+func (r *responseWriterWithMetrics) Flush() {
+	r.ResponseWriter.(http.Flusher).Flush()
+}
+
+func (r *responseWriterWithMetrics) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return r.ResponseWriter.(http.Hijacker).Hijack()
+}
+
+func (r *responseWriterWithMetrics) ReadFrom(src io.Reader) (int64, error) {
+	return r.ResponseWriter.(io.ReaderFrom).ReadFrom(src)
+}
+
 func StdMetricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if !isutools.Enable {
@@ -116,7 +141,12 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		wrappedRes := newResponseWriterWithMetrics(res)
+		var metrics *reponseWriterMetrics
+		wrappedRes := isuhttpgen.ResponseWriterWrapper(res, func(w http.ResponseWriter) isuhttpgen.ResponseWriter {
+			rw := newResponseWriterWithMetrics(w)
+			metrics = &rw.reponseWriterMetrics
+			return rw
+		})
 
 		path := FilterFunc(req.URL.Path)
 		host := req.Host
@@ -143,15 +173,15 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(wrappedRes, req)
 		reqDur := float64(time.Since(start)) / float64(time.Second)
 
-		if wrappedRes.statusCode == -1 {
+		if metrics.statusCode == -1 {
 			return
 		}
 
-		statusCode := strconv.Itoa(wrappedRes.statusCode)
+		statusCode := strconv.Itoa(metrics.statusCode)
 
 		reqSizeHistogramVec.WithLabelValues(statusCode, method, path).Observe(reqSz)
 		reqDurHistogramVec.WithLabelValues(statusCode, method, path).Observe(reqDur)
 		reqCounterVec.WithLabelValues(statusCode, method, host, path).Inc()
-		resSizeHistogramVec.WithLabelValues(statusCode, method, path).Observe(wrappedRes.resSize)
+		resSizeHistogramVec.WithLabelValues(statusCode, method, path).Observe(metrics.resSize)
 	})
 }
