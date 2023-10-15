@@ -8,6 +8,7 @@ require (
 	github.com/prometheus/client_golang v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/valyala/fasthttp v1.50.0
+	golang.org/x/sync v0.4.0
 	golang.org/x/tools v0.14.0
 )
 
@@ -67,7 +68,7 @@ require (
 	github.com/motoki317/sc v1.6.0
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
-	github.com/prometheus/procfs v0.11.1 // indirect
+	github.com/prometheus/procfs v0.11.1
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0
 	golang.org/x/sys v0.13.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
