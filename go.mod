@@ -58,7 +58,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/goccy/go-json v0.10.2
-	github.com/gofiber/fiber/v2 v2.49.2
+	github.com/gofiber/fiber/v2 v2.50.0
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/labstack/echo/v4 v4.11.2
 	github.com/lib/pq v1.10.9
