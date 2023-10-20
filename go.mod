@@ -68,7 +68,7 @@ require (
 	github.com/motoki317/sc v1.6.0
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
-	github.com/prometheus/procfs v0.11.1
+	github.com/prometheus/procfs v0.12.0
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0
 	golang.org/x/sys v0.13.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
