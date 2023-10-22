@@ -2,10 +2,9 @@ package isuhttp
 
 import (
 	"net/http"
-	"strconv"
-	"strings"
+	"regexp"
+	"sync"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/valyala/fasthttp"
@@ -102,38 +101,40 @@ func fastHTTPReqSize(req *fasthttp.Request) float64 {
 	return size
 }
 
-type replacePair struct {
-	old, new string
-}
+var (
+	filterCacheLocker = &sync.RWMutex{}
+	filterCache       = make(map[string]string, 50)
+	filterReList      = []struct {
+		re *regexp.Regexp
+		to string
+	}{{
+		// uuid
+		re: regexp.MustCompile(`[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}`),
+		to: "<uuid>",
+	}, {
+		// number
+		re: regexp.MustCompile(`\d+`),
+		to: "<number>",
+	}}
+)
 
 var FilterFunc = func(path string) string {
-	pathList := strings.Split(path, "/")
+	newPath, ok := func() (string, bool) {
+		filterCacheLocker.RLock()
+		defer filterCacheLocker.RUnlock()
 
-	replacePairs := []replacePair{}
-	for _, v := range pathList {
-		_, err := uuid.Parse(v)
-		if err == nil {
-			replacePairs = append(replacePairs, replacePair{
-				old: v,
-				new: "<uuid>",
-			})
-
-			continue
+		if v, ok := filterCache[path]; ok {
+			return v, true
 		}
 
-		_, err = strconv.Atoi(v)
-		if err == nil {
-			replacePairs = append(replacePairs, replacePair{
-				old: v,
-				new: "<int>",
-			})
-
-			continue
-		}
+		return "", false
+	}()
+	if ok {
+		return newPath
 	}
 
-	for _, pair := range replacePairs {
-		path = strings.Replace(path, pair.old, pair.new, 1)
+	for _, re := range filterReList {
+		path = re.re.ReplaceAllString(path, re.to)
 	}
 
 	return path
