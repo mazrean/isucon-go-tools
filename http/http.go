@@ -88,10 +88,10 @@ func listen(addr string) (net.Listener, error) {
 
 type responseWriterWithMetrics struct {
 	http.ResponseWriter
-	reponseWriterMetrics
+	responseWriterMetrics
 }
 
-type reponseWriterMetrics struct {
+type responseWriterMetrics struct {
 	statusCode int
 	resSize    float64
 }
@@ -99,7 +99,7 @@ type reponseWriterMetrics struct {
 func newResponseWriterWithMetrics(w http.ResponseWriter) *responseWriterWithMetrics {
 	return &responseWriterWithMetrics{
 		ResponseWriter: w,
-		reponseWriterMetrics: reponseWriterMetrics{
+		responseWriterMetrics: responseWriterMetrics{
 			statusCode: -1,
 			resSize:    0,
 		},
@@ -141,10 +141,10 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		var metrics *reponseWriterMetrics
+		var metrics *responseWriterMetrics
 		wrappedRes := isuhttpgen.ResponseWriterWrapper(res, func(w http.ResponseWriter) isuhttpgen.ResponseWriter {
 			rw := newResponseWriterWithMetrics(w)
-			metrics = &rw.reponseWriterMetrics
+			metrics = &rw.responseWriterMetrics
 			return rw
 		})
 
