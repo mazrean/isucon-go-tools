@@ -100,7 +100,7 @@ func newResponseWriterWithMetrics(w http.ResponseWriter) *responseWriterWithMetr
 	return &responseWriterWithMetrics{
 		ResponseWriter: w,
 		responseWriterMetrics: responseWriterMetrics{
-			statusCode: -1,
+			statusCode: 200,
 			resSize:    0,
 		},
 	}
@@ -172,10 +172,6 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 		next.ServeHTTP(wrappedRes, req)
 		reqDur := float64(time.Since(start)) / float64(time.Second)
-
-		if metrics.statusCode == -1 {
-			return
-		}
 
 		statusCode := strconv.Itoa(metrics.statusCode)
 
