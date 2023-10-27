@@ -3,7 +3,6 @@ module github.com/mazrean/isucon-go-tools
 go 1.21.0
 
 require (
-	github.com/google/uuid v1.3.1
 	github.com/gostaticanalysis/analysisutil v0.7.1
 	github.com/prometheus/client_golang v1.17.0
 	github.com/stretchr/testify v1.8.4
@@ -23,6 +22,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/google/pprof v0.0.0-20211214055906-6f57359322fd // indirect
+	github.com/google/uuid v1.4.0 // indirect
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
