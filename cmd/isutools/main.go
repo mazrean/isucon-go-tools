@@ -23,6 +23,8 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+
+			return
 		}
 	}
 	multichecker.Main(

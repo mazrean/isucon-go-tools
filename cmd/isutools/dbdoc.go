@@ -6,6 +6,9 @@ import (
 	"go/constant"
 	"go/token"
 	"go/types"
+	"log"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -17,6 +20,7 @@ import (
 var (
 	dbDocFlagSet = flag.NewFlagSet("dbdoc", flag.ExitOnError)
 	dst          string
+	wd           string
 )
 
 func init() {
@@ -29,19 +33,24 @@ func dbDoc(args []string) error {
 		return fmt.Errorf("failed to parse flag: %w", err)
 	}
 
+	wd, err = os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
+
 	fset := token.NewFileSet()
 	pkgs, err := packages.Load(&packages.Config{
 		Fset: fset,
-		Mode: packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedImports | packages.NeedTypesInfo,
+		Mode: packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedImports | packages.NeedTypesInfo | packages.NeedName | packages.NeedModule,
 	}, dbDocFlagSet.Args()...)
 	if err != nil {
 		return fmt.Errorf("failed to load packages: %w", err)
 	}
 
-	ssaProgram, _ := ssautil.AllPackages(pkgs, ssa.BuildSerially|ssa.SanityCheckFunctions|ssa.GlobalDebug|ssa.BareInits|ssa.NaiveForm)
+	ssaProgram, _ := ssautil.AllPackages(pkgs, ssa.BareInits)
 	ssaProgram.Build()
 
-	var queries []query
+	var funcs []function
 	for _, pkg := range pkgs {
 		for _, def := range pkg.TypesInfo.Defs {
 			if def == nil {
@@ -55,32 +64,60 @@ func dbDoc(args []string) error {
 					continue
 				}
 
+				var queries []query
 				for _, block := range ssaFunc.Blocks {
 					for _, instr := range block.Instrs {
 						switch instr := instr.(type) {
 						case *ssa.BinOp:
-							query, ok := newQueryFromValue(fset, instr.X)
+							var pos token.Position
+							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
+								pos = fset.Position(val.Pos())
+								if pos.IsValid() {
+									break
+								}
+							}
+							query, ok := newQueryFromValue(pos, instr.X)
 							if !ok {
 								continue
 							}
 
 							queries = append(queries, query)
 
-							query, ok = newQueryFromValue(fset, instr.Y)
+							for _, val := range []interface{ Pos() token.Pos }{instr.Y, instr, def} {
+								pos = fset.Position(val.Pos())
+								if pos.IsValid() {
+									break
+								}
+							}
+							query, ok = newQueryFromValue(pos, instr.Y)
 							if !ok {
 								continue
 							}
 
 							queries = append(queries, query)
 						case *ssa.ChangeType:
-							query, ok := newQueryFromValue(fset, instr.X)
+							var pos token.Position
+							for _, val := range []interface{ Pos() token.Pos }{instr, def} {
+								pos = fset.Position(val.Pos())
+								if pos.IsValid() {
+									break
+								}
+							}
+							query, ok := newQueryFromValue(pos, instr.X)
 							if !ok {
 								continue
 							}
 
 							queries = append(queries, query)
 						case *ssa.Convert:
-							query, ok := newQueryFromValue(fset, instr.X)
+							var pos token.Position
+							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
+								pos = fset.Position(val.Pos())
+								if pos.IsValid() {
+									break
+								}
+							}
+							query, ok := newQueryFromValue(pos, instr.X)
 							if !ok {
 								continue
 							}
@@ -88,7 +125,14 @@ func dbDoc(args []string) error {
 							queries = append(queries, query)
 						case *ssa.MakeClosure:
 							for _, bind := range instr.Bindings {
-								query, ok := newQueryFromValue(fset, bind)
+								var pos token.Position
+								for _, val := range []interface{ Pos() token.Pos }{bind, instr, def} {
+									pos = fset.Position(val.Pos())
+									if pos.IsValid() {
+										break
+									}
+								}
+								query, ok := newQueryFromValue(pos, bind)
 								if !ok {
 									continue
 								}
@@ -96,14 +140,28 @@ func dbDoc(args []string) error {
 								queries = append(queries, query)
 							}
 						case *ssa.MultiConvert:
-							query, ok := newQueryFromValue(fset, instr.X)
+							var pos token.Position
+							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
+								pos = fset.Position(val.Pos())
+								if pos.IsValid() {
+									break
+								}
+							}
+							query, ok := newQueryFromValue(pos, instr.X)
 							if !ok {
 								continue
 							}
 
 							queries = append(queries, query)
 						case *ssa.Store:
-							query, ok := newQueryFromValue(fset, instr.Val)
+							var pos token.Position
+							for _, val := range []interface{ Pos() token.Pos }{instr.Val, instr, def} {
+								pos = fset.Position(val.Pos())
+								if pos.IsValid() {
+									break
+								}
+							}
+							query, ok := newQueryFromValue(pos, instr.Val)
 							if !ok {
 								continue
 							}
@@ -111,7 +169,14 @@ func dbDoc(args []string) error {
 							queries = append(queries, query)
 						case *ssa.Call:
 							for _, arg := range instr.Call.Args {
-								query, ok := newQueryFromValue(fset, arg)
+								var pos token.Position
+								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Value(), instr, def} {
+									pos = fset.Position(val.Pos())
+									if pos.IsValid() {
+										break
+									}
+								}
+								query, ok := newQueryFromValue(pos, arg)
 								if !ok {
 									continue
 								}
@@ -120,7 +185,14 @@ func dbDoc(args []string) error {
 							}
 						case *ssa.Defer:
 							for _, arg := range instr.Call.Args {
-								query, ok := newQueryFromValue(fset, arg)
+								var pos token.Position
+								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Value(), instr, def} {
+									pos = fset.Position(val.Pos())
+									if pos.IsValid() {
+										break
+									}
+								}
+								query, ok := newQueryFromValue(pos, arg)
 								if !ok {
 									continue
 								}
@@ -129,7 +201,14 @@ func dbDoc(args []string) error {
 							}
 						case *ssa.Go:
 							for _, arg := range instr.Call.Args {
-								query, ok := newQueryFromValue(fset, arg)
+								var pos token.Position
+								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Value(), instr, def} {
+									pos = fset.Position(val.Pos())
+									if pos.IsValid() {
+										break
+									}
+								}
+								query, ok := newQueryFromValue(pos, arg)
 								if !ok {
 									continue
 								}
@@ -139,15 +218,30 @@ func dbDoc(args []string) error {
 						}
 					}
 				}
+
+				if len(queries) == 0 {
+					continue
+				}
+
+				funcName := strings.Replace(def.FullName(), pkg.Module.Path, "", 1)
+				funcs = append(funcs, function{
+					name:    funcName,
+					queries: queries,
+				})
 			}
 		}
 	}
 
-	for _, query := range queries {
-		fmt.Println(query)
+	for _, f := range funcs {
+		fmt.Println(f)
 	}
 
 	return nil
+}
+
+type function struct {
+	name    string
+	queries []query
 }
 
 type queryType uint8
@@ -159,27 +253,49 @@ const (
 	queryTypeDelete
 )
 
+func (qt queryType) String() string {
+	switch qt {
+	case queryTypeSelect:
+		return "select"
+	case queryTypeInsert:
+		return "insert"
+	case queryTypeUpdate:
+		return "update"
+	case queryTypeDelete:
+		return "delete"
+	}
+
+	return ""
+}
+
 type query struct {
 	queryType queryType
 	table     string
-	pos       token.Pos
+	pos       token.Position
 }
 
-func newQueryFromValue(fset *token.FileSet, v ssa.Value) (query, bool) {
-	strQuery, ok := checkValue(v)
+func newQueryFromValue(pos token.Position, v ssa.Value) (query, bool) {
+	strQuery, ok := checkValue(v, pos)
 	if !ok {
 		return query{}, false
 	}
 
-	return analyseSQL(fset, strQuery)
+	q, ok := analyzeSQL(strQuery)
+	if !ok {
+		return query{}, false
+	}
+
+	fmt.Printf("%s(%s): %s\n", q.queryType, q.table, strQuery.value)
+
+	return q, true
 }
 
 type stringLiteral struct {
 	value string
-	pos   token.Pos
+	pos   token.Position
 }
 
-func checkValue(v ssa.Value) (*stringLiteral, bool) {
+func checkValue(v ssa.Value, pos token.Position) (*stringLiteral, bool) {
 	constValue, ok := v.(*ssa.Const)
 	if !ok || constValue == nil || constValue.Value == nil {
 		return nil, false
@@ -191,7 +307,7 @@ func checkValue(v ssa.Value) (*stringLiteral, bool) {
 
 	return &stringLiteral{
 		value: constant.StringVal(constValue.Value),
-		pos:   constValue.Pos(),
+		pos:   pos,
 	}, true
 }
 
@@ -202,14 +318,14 @@ var (
 	deleteRe = regexp.MustCompile("^delete\\s+from\\s+[\\[\"'`]?(\\w+)[\\]\"'`]?\\s*")
 )
 
-func analyseSQL(fset *token.FileSet, sql *stringLiteral) (query, bool) {
+func analyzeSQL(sql *stringLiteral) (query, bool) {
 	sqlValue := strings.ToLower(sql.value)
 
 	switch {
 	case strings.HasPrefix(sqlValue, "select"):
 		matches := selectRe.FindStringSubmatch(sqlValue)
 		if len(matches) < 2 {
-			tableName, ok := tableForm(fset, sql.pos)
+			tableName, ok := tableForm(sql)
 			if !ok {
 				return query{}, false
 			}
@@ -229,7 +345,7 @@ func analyseSQL(fset *token.FileSet, sql *stringLiteral) (query, bool) {
 	case strings.HasPrefix(sqlValue, "insert"):
 		matches := insertRe.FindStringSubmatch(sqlValue)
 		if len(matches) < 2 {
-			tableName, ok := tableForm(fset, sql.pos)
+			tableName, ok := tableForm(sql)
 			if !ok {
 				return query{}, false
 			}
@@ -249,7 +365,7 @@ func analyseSQL(fset *token.FileSet, sql *stringLiteral) (query, bool) {
 	case strings.HasPrefix(sqlValue, "update"):
 		matches := updateRe.FindStringSubmatch(sqlValue)
 		if len(matches) < 2 {
-			tableName, ok := tableForm(fset, sql.pos)
+			tableName, ok := tableForm(sql)
 			if !ok {
 				return query{}, false
 			}
@@ -269,7 +385,7 @@ func analyseSQL(fset *token.FileSet, sql *stringLiteral) (query, bool) {
 	case strings.HasPrefix(sqlValue, "delete"):
 		matches := deleteRe.FindStringSubmatch(sqlValue)
 		if len(matches) < 2 {
-			tableName, ok := tableForm(fset, sql.pos)
+			tableName, ok := tableForm(sql)
 			if !ok {
 				return query{}, false
 			}
@@ -291,11 +407,16 @@ func analyseSQL(fset *token.FileSet, sql *stringLiteral) (query, bool) {
 	return query{}, false
 }
 
-func tableForm(fset *token.FileSet, pos token.Pos) (string, bool) {
-	position := fset.Position(pos)
-	fmt.Printf("table name of %s:%d:%d :", position.Filename, position.Line, position.Column)
+func tableForm(sql *stringLiteral) (string, bool) {
+	filename, err := filepath.Rel(wd, sql.pos.Filename)
+	if err != nil {
+		log.Printf("failed to get relative path: %v", err)
+		return "", false
+	}
+
+	fmt.Printf("table name(%s:%d:%d): ", filename, sql.pos.Line, sql.pos.Column)
 	var tableName string
-	_, err := fmt.Scan(&tableName)
+	_, err = fmt.Scanln(&tableName)
 	if err != nil {
 		return "", false
 	}
