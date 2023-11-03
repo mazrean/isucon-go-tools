@@ -7,9 +7,8 @@ import (
 	"go/format"
 	"go/token"
 	"reflect"
-	"strings"
-	"unicode"
 
+	"github.com/mazrean/isucon-go-tools/pkg/analyze"
 	"github.com/mazrean/isucon-go-tools/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
 )
@@ -37,7 +36,6 @@ func run(pass *analysis.Pass) (any, error) {
 		initializeFuncDecl *ast.FuncDecl
 		initializeFuncName string
 	)
-FILE_LOOP:
 	for _, f := range pass.Files {
 		for _, decl := range f.Decls {
 			funcDecl, ok := decl.(*ast.FuncDecl)
@@ -50,14 +48,11 @@ FILE_LOOP:
 				continue
 			}
 
-			words := camelCaseSplit(funcName.Name)
-			for _, word := range words {
-				if strings.ToLower(word) == initializeKeyword {
-					initializeFuncFile = f
-					initializeFuncDecl = funcDecl
-					initializeFuncName = funcName.Name
-					break FILE_LOOP
-				}
+			if analyze.IsInitializeFuncName(funcName.Name) {
+				initializeFuncFile = f
+				initializeFuncDecl = funcDecl
+				initializeFuncName = funcName.Name
+				break
 			}
 		}
 	}
@@ -158,18 +153,4 @@ FILE_LOOP:
 	})
 
 	return importPkgs, nil
-}
-
-func camelCaseSplit(s string) []string {
-	var result []string
-	start := 0
-	for i, r := range s {
-		if unicode.IsUpper(r) {
-			result = append(result, s[start:i])
-			start = i
-		}
-	}
-	result = append(result, s[start:])
-
-	return result
 }
