@@ -12,8 +12,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
+	"github.com/mazrean/isucon-go-tools/pkg/analyze"
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"
@@ -544,6 +546,10 @@ func buildGraph(funcs []function) []*node {
 	}
 	tmpNodeMap := make(map[string]tmpNode, len(funcs))
 	for _, f := range funcs {
+		if f.name == "main" || analyze.IsInitializeFuncName(f.name) {
+			continue
+		}
+
 		var edges []tmpEdge
 		for _, q := range f.queries {
 			id := tableID(q.table)
@@ -682,7 +688,7 @@ func tableID(table string) string {
 }
 
 const (
-	mermaidHeader = "# DB Graph\n```mermaid\ngraph LR\n"
+	mermaidHeader = "# DB Graph\n```mermaid\ngraph LR\n  classDef func fill:#7BCCAC,fill-opacity:0.5\n  classDef table fill:#ffa23e,fill-opacity:0.5\n"
 	mermaidFooter = "```"
 )
 
@@ -693,19 +699,93 @@ func writeMermaid(nodes []*node) (string, error) {
 		return "", fmt.Errorf("failed to write header: %w", err)
 	}
 
+	edgeID := 0
+	var insertLinks, deleteLinks, selectLinks, updateLinks, callLinks []string
 	for _, node := range nodes {
+		var src string
+		switch node.nodeType {
+		case nodeTypeTable:
+			src = fmt.Sprintf("%s[%s]:::table", node.id, node.label)
+		case nodeTypeFunction:
+			src = fmt.Sprintf("%s[%s]:::func", node.id, node.label)
+		default:
+			log.Printf("unknown node type: %v\n", node.nodeType)
+			src = fmt.Sprintf("%s[%s]", node.id, node.label)
+		}
+
 		for _, edge := range node.edges {
+			var dst, line string
+			switch edge.node.nodeType {
+			case nodeTypeTable:
+				dst = fmt.Sprintf("%s[%s]:::table", edge.node.id, edge.node.label)
+			case nodeTypeFunction:
+				dst = fmt.Sprintf("%s[%s]:::func", edge.node.id, edge.node.label)
+			default:
+				log.Printf("unknown node type: %v\n", edge.node.nodeType)
+				dst = fmt.Sprintf("%s[%s]", edge.node.id, edge.node.label)
+			}
+
+			line = "--"
+
 			if edge.label == "" {
-				_, err = sb.WriteString(fmt.Sprintf("  %s[%s] --> %s[%s]\n", node.id, node.label, edge.node.id, edge.node.label))
+				_, err = sb.WriteString(fmt.Sprintf("  %s %s> %s\n", src, line, dst))
 				if err != nil {
 					return "", fmt.Errorf("failed to write edge: %w\n", err)
 				}
 			} else {
-				_, err = sb.WriteString(fmt.Sprintf("  %s[%s] -- %s --> %s[%s]\n", node.id, node.label, edge.label, edge.node.id, edge.node.label))
+				_, err = sb.WriteString(fmt.Sprintf("  %s %s %s %s> %s\n", src, line, edge.label, line, dst))
 				if err != nil {
 					return "", fmt.Errorf("failed to write edge: %w\n", err)
 				}
 			}
+
+			switch edge.edgeType {
+			case edgeTypeInsert:
+				insertLinks = append(insertLinks, strconv.Itoa(edgeID))
+			case edgeTypeDelete:
+				deleteLinks = append(deleteLinks, strconv.Itoa(edgeID))
+			case edgeTypeSelect:
+				selectLinks = append(selectLinks, strconv.Itoa(edgeID))
+			case edgeTypeUpdate:
+				updateLinks = append(updateLinks, strconv.Itoa(edgeID))
+			case edgeTypeCall:
+				callLinks = append(callLinks, strconv.Itoa(edgeID))
+			default:
+				log.Printf("unknown edge type: %v\n", edge.edgeType)
+			}
+
+			edgeID++
+		}
+	}
+
+	if len(insertLinks) > 0 {
+		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#4CAF50,stroke-width:2px\n", strings.Join(insertLinks, ",")))
+		if err != nil {
+			return "", fmt.Errorf("failed to write link style: %w\n", err)
+		}
+	}
+	if len(deleteLinks) > 0 {
+		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#F44336,stroke-width:2px\n", strings.Join(deleteLinks, ",")))
+		if err != nil {
+			return "", fmt.Errorf("failed to write link style: %w\n", err)
+		}
+	}
+	if len(selectLinks) > 0 {
+		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#2196F3,stroke-width:2px\n", strings.Join(selectLinks, ",")))
+		if err != nil {
+			return "", fmt.Errorf("failed to write link style: %w\n", err)
+		}
+	}
+	if len(updateLinks) > 0 {
+		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#FF9800,stroke-width:2px\n", strings.Join(updateLinks, ",")))
+		if err != nil {
+			return "", fmt.Errorf("failed to write link style: %w\n", err)
+		}
+	}
+	if len(callLinks) > 0 {
+		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#000000,stroke-width:2px\n", strings.Join(callLinks, ",")))
+		if err != nil {
+			return "", fmt.Errorf("failed to write link style: %w\n", err)
 		}
 	}
 
