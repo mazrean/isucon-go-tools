@@ -59,12 +59,11 @@ func dbDoc(args []string) error {
 
 	nodes := buildGraph(funcs)
 
-	for _, node := range nodes {
-		fmt.Printf("%s: %d\n", node.label, node.nodeType)
-		for _, edge := range node.edges {
-			fmt.Printf("  %s: %s\n", edge.label, edge.node.id)
-		}
+	mermaid, err := writeMermaid(nodes)
+	if err != nil {
+		return fmt.Errorf("failed to write mermaid: %w", err)
 	}
+	println(mermaid)
 
 	return nil
 }
@@ -296,7 +295,7 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 					continue
 				}
 
-				funcName := strings.Replace(def.FullName(), pkg.Module.Path, "", 1)
+				funcName := strings.TrimPrefix(strings.Replace(def.FullName(), pkg.Module.Path, "", 1), ".")
 				funcs = append(funcs, function{
 					id:      def.Id(),
 					name:    funcName,
@@ -572,7 +571,7 @@ func buildGraph(funcs []function) []*node {
 			}
 
 			edges = append(edges, tmpEdge{
-				label:    q.table,
+				label:    "",
 				edgeType: edgeType,
 				childID:  tableID(q.table),
 			})
@@ -581,7 +580,7 @@ func buildGraph(funcs []function) []*node {
 		for _, c := range f.calls {
 			id := funcID(c)
 			edges = append(edges, tmpEdge{
-				label:    c,
+				label:    "",
 				edgeType: edgeTypeCall,
 				childID:  id,
 			})
@@ -680,4 +679,40 @@ func funcID(functionID string) string {
 
 func tableID(table string) string {
 	return fmt.Sprintf("table:%s", table)
+}
+
+const (
+	mermaidHeader = "# DB Graph\n```mermaid\ngraph LR\n"
+	mermaidFooter = "```"
+)
+
+func writeMermaid(nodes []*node) (string, error) {
+	sb := &strings.Builder{}
+	_, err := sb.WriteString(mermaidHeader)
+	if err != nil {
+		return "", fmt.Errorf("failed to write header: %w", err)
+	}
+
+	for _, node := range nodes {
+		for _, edge := range node.edges {
+			if edge.label == "" {
+				_, err = sb.WriteString(fmt.Sprintf("  %s[%s] --> %s[%s]\n", node.id, node.label, edge.node.id, edge.node.label))
+				if err != nil {
+					return "", fmt.Errorf("failed to write edge: %w\n", err)
+				}
+			} else {
+				_, err = sb.WriteString(fmt.Sprintf("  %s[%s] -- %s --> %s[%s]\n", node.id, node.label, edge.label, edge.node.id, edge.node.label))
+				if err != nil {
+					return "", fmt.Errorf("failed to write edge: %w\n", err)
+				}
+			}
+		}
+	}
+
+	_, err = sb.WriteString(mermaidFooter)
+	if err != nil {
+		return "", fmt.Errorf("failed to write footer: %w", err)
+	}
+
+	return sb.String(), nil
 }
