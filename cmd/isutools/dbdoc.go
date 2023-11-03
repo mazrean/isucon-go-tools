@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"flag"
 	"fmt"
 	"go/constant"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -50,6 +52,24 @@ func dbDoc(args []string) error {
 	ssaProgram, _ := ssautil.AllPackages(pkgs, ssa.BareInits)
 	ssaProgram.Build()
 
+	funcs, err := buildFuncs(fset, pkgs, ssaProgram)
+	if err != nil {
+		return fmt.Errorf("failed to build funcs: %w", err)
+	}
+
+	nodes := buildGraph(funcs)
+
+	for _, node := range nodes {
+		fmt.Printf("%s: %d\n", node.label, node.nodeType)
+		for _, edge := range node.edges {
+			fmt.Printf("  %s: %s\n", edge.label, edge.node.id)
+		}
+	}
+
+	return nil
+}
+
+func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.Program) ([]function, error) {
 	var funcs []function
 	for _, pkg := range pkgs {
 		for _, def := range pkg.TypesInfo.Defs {
@@ -65,12 +85,17 @@ func dbDoc(args []string) error {
 				}
 
 				var queries []query
+				var calls []string
 				for _, block := range ssaFunc.Blocks {
 					for _, instr := range block.Instrs {
 						switch instr := instr.(type) {
 						case *ssa.BinOp:
 							var pos token.Position
 							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
+								if val == nil {
+									continue
+								}
+
 								pos = fset.Position(val.Pos())
 								if pos.IsValid() {
 									break
@@ -84,6 +109,10 @@ func dbDoc(args []string) error {
 							queries = append(queries, query)
 
 							for _, val := range []interface{ Pos() token.Pos }{instr.Y, instr, def} {
+								if val == nil {
+									continue
+								}
+
 								pos = fset.Position(val.Pos())
 								if pos.IsValid() {
 									break
@@ -98,6 +127,10 @@ func dbDoc(args []string) error {
 						case *ssa.ChangeType:
 							var pos token.Position
 							for _, val := range []interface{ Pos() token.Pos }{instr, def} {
+								if val == nil {
+									continue
+								}
+
 								pos = fset.Position(val.Pos())
 								if pos.IsValid() {
 									break
@@ -112,6 +145,10 @@ func dbDoc(args []string) error {
 						case *ssa.Convert:
 							var pos token.Position
 							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
+								if val == nil {
+									continue
+								}
+
 								pos = fset.Position(val.Pos())
 								if pos.IsValid() {
 									break
@@ -127,6 +164,10 @@ func dbDoc(args []string) error {
 							for _, bind := range instr.Bindings {
 								var pos token.Position
 								for _, val := range []interface{ Pos() token.Pos }{bind, instr, def} {
+									if val == nil {
+										continue
+									}
+
 									pos = fset.Position(val.Pos())
 									if pos.IsValid() {
 										break
@@ -142,6 +183,10 @@ func dbDoc(args []string) error {
 						case *ssa.MultiConvert:
 							var pos token.Position
 							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
+								if val == nil {
+									continue
+								}
+
 								pos = fset.Position(val.Pos())
 								if pos.IsValid() {
 									break
@@ -156,6 +201,10 @@ func dbDoc(args []string) error {
 						case *ssa.Store:
 							var pos token.Position
 							for _, val := range []interface{ Pos() token.Pos }{instr.Val, instr, def} {
+								if val == nil {
+									continue
+								}
+
 								pos = fset.Position(val.Pos())
 								if pos.IsValid() {
 									break
@@ -168,9 +217,17 @@ func dbDoc(args []string) error {
 
 							queries = append(queries, query)
 						case *ssa.Call:
+							if f, ok := instr.Call.Value.(*ssa.Function); ok {
+								calls = append(calls, f.Object().Id())
+							}
+
 							for _, arg := range instr.Call.Args {
 								var pos token.Position
-								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Value(), instr, def} {
+								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Common(), instr, def} {
+									if val == nil {
+										continue
+									}
+
 									pos = fset.Position(val.Pos())
 									if pos.IsValid() {
 										break
@@ -184,9 +241,17 @@ func dbDoc(args []string) error {
 								queries = append(queries, query)
 							}
 						case *ssa.Defer:
+							if f, ok := instr.Call.Value.(*ssa.Function); ok {
+								calls = append(calls, f.Object().Id())
+							}
+
 							for _, arg := range instr.Call.Args {
 								var pos token.Position
-								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Value(), instr, def} {
+								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Common(), instr, def} {
+									if val == nil {
+										continue
+									}
+
 									pos = fset.Position(val.Pos())
 									if pos.IsValid() {
 										break
@@ -200,9 +265,17 @@ func dbDoc(args []string) error {
 								queries = append(queries, query)
 							}
 						case *ssa.Go:
+							if f, ok := instr.Call.Value.(*ssa.Function); ok {
+								calls = append(calls, f.Object().Id())
+							}
+
 							for _, arg := range instr.Call.Args {
 								var pos token.Position
-								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Value(), instr, def} {
+								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Common(), instr, def} {
+									if val == nil {
+										continue
+									}
+
 									pos = fset.Position(val.Pos())
 									if pos.IsValid() {
 										break
@@ -219,29 +292,29 @@ func dbDoc(args []string) error {
 					}
 				}
 
-				if len(queries) == 0 {
+				if len(queries) == 0 && len(calls) == 0 {
 					continue
 				}
 
 				funcName := strings.Replace(def.FullName(), pkg.Module.Path, "", 1)
 				funcs = append(funcs, function{
+					id:      def.Id(),
 					name:    funcName,
 					queries: queries,
+					calls:   calls,
 				})
 			}
 		}
 	}
 
-	for _, f := range funcs {
-		fmt.Println(f)
-	}
-
-	return nil
+	return funcs, nil
 }
 
 type function struct {
+	id      string
 	name    string
 	queries []query
+	calls   []string
 }
 
 type queryType uint8
@@ -426,4 +499,185 @@ func tableForm(sql *stringLiteral) (string, bool) {
 	}
 
 	return tableName, true
+}
+
+type node struct {
+	id       string
+	label    string
+	nodeType nodeType
+	edges    []edge
+}
+
+type nodeType uint8
+
+const (
+	nodeTypeUnknown nodeType = iota
+	nodeTypeTable
+	nodeTypeFunction
+)
+
+type edge struct {
+	label    string
+	node     *node
+	edgeType edgeType
+}
+
+type edgeType uint8
+
+const (
+	edgeTypeUnknown edgeType = iota
+	edgeTypeInsert
+	edgeTypeUpdate
+	edgeTypeDelete
+	edgeTypeSelect
+	edgeTypeCall
+)
+
+func buildGraph(funcs []function) []*node {
+	type tmpEdge struct {
+		label    string
+		edgeType edgeType
+		childID  string
+	}
+	type tmpNode struct {
+		*node
+		edges []tmpEdge
+	}
+	tmpNodeMap := make(map[string]tmpNode, len(funcs))
+	for _, f := range funcs {
+		var edges []tmpEdge
+		for _, q := range f.queries {
+			id := tableID(q.table)
+			tmpNodeMap[id] = tmpNode{
+				node: &node{
+					id:       id,
+					label:    q.table,
+					nodeType: nodeTypeTable,
+				},
+			}
+
+			var edgeType edgeType
+			switch q.queryType {
+			case queryTypeSelect:
+				edgeType = edgeTypeSelect
+			case queryTypeInsert:
+				edgeType = edgeTypeInsert
+			case queryTypeUpdate:
+				edgeType = edgeTypeUpdate
+			case queryTypeDelete:
+				edgeType = edgeTypeDelete
+			default:
+				log.Printf("unknown query type: %v\n", q.queryType)
+				continue
+			}
+
+			edges = append(edges, tmpEdge{
+				label:    q.table,
+				edgeType: edgeType,
+				childID:  tableID(q.table),
+			})
+		}
+
+		for _, c := range f.calls {
+			id := funcID(c)
+			edges = append(edges, tmpEdge{
+				label:    c,
+				edgeType: edgeTypeCall,
+				childID:  id,
+			})
+		}
+
+		slices.SortFunc(edges, func(a, b tmpEdge) int {
+			switch {
+			case a.childID < b.childID:
+				return -1
+			case a.childID > b.childID:
+				return 1
+			default:
+				return 0
+			}
+		})
+		edges = slices.Compact(edges)
+
+		id := funcID(f.id)
+		tmpNodeMap[id] = tmpNode{
+			node: &node{
+				id:       id,
+				label:    f.name,
+				nodeType: nodeTypeFunction,
+			},
+			edges: edges,
+		}
+	}
+
+	type revEdge struct {
+		label    string
+		edgeType edgeType
+		parentID string
+	}
+	revEdgeMap := make(map[string][]revEdge)
+	for _, tmpNode := range tmpNodeMap {
+		for _, tmpEdge := range tmpNode.edges {
+			revEdgeMap[tmpEdge.childID] = append(revEdgeMap[tmpEdge.childID], revEdge{
+				label:    tmpEdge.label,
+				edgeType: tmpEdge.edgeType,
+				parentID: tmpNode.id,
+			})
+		}
+	}
+
+	newNodeMap := make(map[string]tmpNode, len(tmpNodeMap))
+	nodeQueue := list.New()
+	for id, node := range tmpNodeMap {
+		if node.nodeType == nodeTypeTable {
+			newNodeMap[id] = node
+			nodeQueue.PushBack(node)
+			delete(tmpNodeMap, id)
+			continue
+		}
+	}
+
+	for {
+		element := nodeQueue.Front()
+		if element == nil {
+			break
+		}
+		nodeQueue.Remove(element)
+
+		node := element.Value.(tmpNode)
+		for _, edge := range revEdgeMap[node.id] {
+			parent := tmpNodeMap[edge.parentID]
+			newNodeMap[edge.parentID] = parent
+			nodeQueue.PushBack(parent)
+		}
+		delete(revEdgeMap, node.id)
+	}
+
+	var nodes []*node
+	for _, tmpNode := range newNodeMap {
+		node := tmpNode.node
+		for _, tmpEdge := range tmpNode.edges {
+			child, ok := newNodeMap[tmpEdge.childID]
+			if !ok {
+				continue
+			}
+
+			node.edges = append(node.edges, edge{
+				label:    tmpEdge.label,
+				node:     child.node,
+				edgeType: tmpEdge.edgeType,
+			})
+		}
+		nodes = append(nodes, node)
+	}
+
+	return nodes
+}
+
+func funcID(functionID string) string {
+	return fmt.Sprintf("func:%s", functionID)
+}
+
+func tableID(table string) string {
+	return fmt.Sprintf("table:%s", table)
 }
