@@ -22,13 +22,28 @@ import (
 )
 
 var (
-	dbDocFlagSet = flag.NewFlagSet("dbdoc", flag.ExitOnError)
-	dst          string
-	wd           string
+	dbDocFlagSet   = flag.NewFlagSet("dbdoc", flag.ExitOnError)
+	dst            string
+	wd             string
+	ignores        sliceString
+	ignorePrefixes sliceString
 )
+
+type sliceString []string
+
+func (ss *sliceString) String() string {
+	return fmt.Sprintf("%s", *ss)
+}
+
+func (ss *sliceString) Set(value string) error {
+	*ss = append(*ss, value)
+	return nil
+}
 
 func init() {
 	dbDocFlagSet.StringVar(&dst, "dst", "./isudoc", "destination directory")
+	dbDocFlagSet.Var(&ignores, "ignore", "ignore function")
+	dbDocFlagSet.Var(&ignorePrefixes, "ignorePrefix", "ignore function")
 }
 
 func dbDoc(args []string) error {
@@ -553,9 +568,22 @@ func buildGraph(funcs []function) []*node {
 		edges []tmpEdge
 	}
 	tmpNodeMap := make(map[string]tmpNode, len(funcs))
+FUNC_LOOP:
 	for _, f := range funcs {
 		if f.name == "main" || analyze.IsInitializeFuncName(f.name) {
 			continue
+		}
+
+		for _, ignore := range ignores {
+			if f.name == ignore {
+				continue FUNC_LOOP
+			}
+		}
+
+		for _, ignorePrefix := range ignorePrefixes {
+			if strings.HasPrefix(f.name, ignorePrefix) {
+				continue FUNC_LOOP
+			}
 		}
 
 		var edges []tmpEdge
