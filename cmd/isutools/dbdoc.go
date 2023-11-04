@@ -252,6 +252,9 @@ func analyzeFuncBody(blocks []*ssa.BasicBlock, def poser, fset *token.FileSet) (
 				queries = append(queries, newQueries...)
 			case *ssa.Call:
 				if f, ok := instr.Call.Value.(*ssa.Function); ok {
+					if f.Object() == nil {
+						continue
+					}
 					calls = append(calls, f.Object().Id())
 				}
 
@@ -272,6 +275,9 @@ func analyzeFuncBody(blocks []*ssa.BasicBlock, def poser, fset *token.FileSet) (
 				}
 			case *ssa.Defer:
 				if f, ok := instr.Call.Value.(*ssa.Function); ok {
+					if f.Object() == nil {
+						continue
+					}
 					calls = append(calls, f.Object().Id())
 				}
 
@@ -292,6 +298,9 @@ func analyzeFuncBody(blocks []*ssa.BasicBlock, def poser, fset *token.FileSet) (
 				}
 			case *ssa.Go:
 				if f, ok := instr.Call.Value.(*ssa.Function); ok {
+					if f.Object() == nil {
+						continue
+					}
 					calls = append(calls, f.Object().Id())
 				}
 
