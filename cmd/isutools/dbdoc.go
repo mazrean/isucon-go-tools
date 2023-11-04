@@ -102,12 +102,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 									break
 								}
 							}
-							query, ok := newQueryFromValue(pos, instr.X)
-							if !ok {
-								continue
-							}
-
-							queries = append(queries, query)
+							newQueries := newQueryFromValue(pos, instr.X)
+							queries = append(queries, newQueries...)
 
 							for _, val := range []interface{ Pos() token.Pos }{instr.Y, instr, def} {
 								if val == nil {
@@ -119,12 +115,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 									break
 								}
 							}
-							query, ok = newQueryFromValue(pos, instr.Y)
-							if !ok {
-								continue
-							}
-
-							queries = append(queries, query)
+							newQueries = newQueryFromValue(pos, instr.Y)
+							queries = append(queries, newQueries...)
 						case *ssa.ChangeType:
 							var pos token.Position
 							for _, val := range []interface{ Pos() token.Pos }{instr, def} {
@@ -137,12 +129,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 									break
 								}
 							}
-							query, ok := newQueryFromValue(pos, instr.X)
-							if !ok {
-								continue
-							}
-
-							queries = append(queries, query)
+							newQueries := newQueryFromValue(pos, instr.X)
+							queries = append(queries, newQueries...)
 						case *ssa.Convert:
 							var pos token.Position
 							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
@@ -155,12 +143,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 									break
 								}
 							}
-							query, ok := newQueryFromValue(pos, instr.X)
-							if !ok {
-								continue
-							}
-
-							queries = append(queries, query)
+							newQueries := newQueryFromValue(pos, instr.X)
+							queries = append(queries, newQueries...)
 						case *ssa.MakeClosure:
 							for _, bind := range instr.Bindings {
 								var pos token.Position
@@ -174,12 +158,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 										break
 									}
 								}
-								query, ok := newQueryFromValue(pos, bind)
-								if !ok {
-									continue
-								}
-
-								queries = append(queries, query)
+								newQueries := newQueryFromValue(pos, bind)
+								queries = append(queries, newQueries...)
 							}
 						case *ssa.MultiConvert:
 							var pos token.Position
@@ -193,12 +173,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 									break
 								}
 							}
-							query, ok := newQueryFromValue(pos, instr.X)
-							if !ok {
-								continue
-							}
-
-							queries = append(queries, query)
+							newQueries := newQueryFromValue(pos, instr.X)
+							queries = append(queries, newQueries...)
 						case *ssa.Store:
 							var pos token.Position
 							for _, val := range []interface{ Pos() token.Pos }{instr.Val, instr, def} {
@@ -211,12 +187,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 									break
 								}
 							}
-							query, ok := newQueryFromValue(pos, instr.Val)
-							if !ok {
-								continue
-							}
-
-							queries = append(queries, query)
+							newQueries := newQueryFromValue(pos, instr.Val)
+							queries = append(queries, newQueries...)
 						case *ssa.Call:
 							if f, ok := instr.Call.Value.(*ssa.Function); ok {
 								calls = append(calls, f.Object().Id())
@@ -234,12 +206,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 										break
 									}
 								}
-								query, ok := newQueryFromValue(pos, arg)
-								if !ok {
-									continue
-								}
-
-								queries = append(queries, query)
+								newQueries := newQueryFromValue(pos, arg)
+								queries = append(queries, newQueries...)
 							}
 						case *ssa.Defer:
 							if f, ok := instr.Call.Value.(*ssa.Function); ok {
@@ -258,12 +226,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 										break
 									}
 								}
-								query, ok := newQueryFromValue(pos, arg)
-								if !ok {
-									continue
-								}
-
-								queries = append(queries, query)
+								newQueries := newQueryFromValue(pos, arg)
+								queries = append(queries, newQueries...)
 							}
 						case *ssa.Go:
 							if f, ok := instr.Call.Value.(*ssa.Function); ok {
@@ -282,12 +246,8 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 										break
 									}
 								}
-								query, ok := newQueryFromValue(pos, arg)
-								if !ok {
-									continue
-								}
-
-								queries = append(queries, query)
+								newQueries := newQueryFromValue(pos, arg)
+								queries = append(queries, newQueries...)
 							}
 						}
 					}
@@ -348,20 +308,19 @@ type query struct {
 	pos       token.Position
 }
 
-func newQueryFromValue(pos token.Position, v ssa.Value) (query, bool) {
+func newQueryFromValue(pos token.Position, v ssa.Value) []query {
 	strQuery, ok := checkValue(v, pos)
 	if !ok {
-		return query{}, false
+		return nil
 	}
 
-	q, ok := analyzeSQL(strQuery)
-	if !ok {
-		return query{}, false
+	queries := analyzeSQL(strQuery)
+
+	for _, q := range queries {
+		fmt.Printf("%s(%s): %s\n", q.queryType, q.table, strQuery.value)
 	}
 
-	fmt.Printf("%s(%s): %s\n", q.queryType, q.table, strQuery.value)
-
-	return q, true
+	return queries
 }
 
 type stringLiteral struct {
@@ -386,120 +345,148 @@ func checkValue(v ssa.Value, pos token.Position) (*stringLiteral, bool) {
 }
 
 var (
-	selectRe = regexp.MustCompile("^select\\s+.*\\s+from\\s+[\\[\"'`]?(\\w+)[\\]\"'`]?\\s*")
-	insertRe = regexp.MustCompile("^insert\\s+into\\s+[\\[\"'`]?(\\w+)[\\]\"'`]?\\s*")
-	updateRe = regexp.MustCompile("^update\\s+[\\[\"'`]?(\\w+)[\\]\"'`]?\\s*")
-	deleteRe = regexp.MustCompile("^delete\\s+from\\s+[\\[\"'`]?(\\w+)[\\]\"'`]?\\s*")
+	tableRe        = regexp.MustCompile("^\\s*[\\[\"'`]?(?P<Table>\\w+)[\\]\"'`]?\\s*")
+	insertRe       = regexp.MustCompile("^insert\\s+into\\s+[\\[\"'`]?(?P<Table>\\w+)[\\]\"'`]?\\s*")
+	deleteRe       = regexp.MustCompile("^delete\\s+from\\s+[\\[\"'`]?(?P<Table>\\w+)[\\]\"'`]?\\s*")
+	selectKeywords = []string{" where ", " group by ", " having ", " window ", " order by ", "limit ", " for "}
 )
 
-func analyzeSQL(sql *stringLiteral) (query, bool) {
+func analyzeSQL(sql *stringLiteral) []query {
 	sqlValue := strings.ToLower(sql.value)
 
+	var queries []query
 	switch {
 	case strings.HasPrefix(sqlValue, "select"):
-		matches := selectRe.FindStringSubmatch(sqlValue)
-		if len(matches) < 2 {
-			tableName, ok := tableForm(sql)
-			if !ok {
-				return query{}, false
-			}
+		_, after, found := strings.Cut(sqlValue, " from ")
+		if !found {
+			tableNames := tableForm(sql)
 
-			return query{
-				queryType: queryTypeSelect,
-				table:     tableName,
-				pos:       sql.pos,
-			}, true
+			for _, tableName := range tableNames {
+				queries = append(queries, query{
+					queryType: queryTypeSelect,
+					table:     tableName,
+					pos:       sql.pos,
+				})
+			}
+			break
 		}
 
-		return query{
-			queryType: queryTypeSelect,
-			table:     matches[1],
-			pos:       sql.pos,
-		}, true
+		tmpTableNames := strings.Split(after, ",")
+		var tableNames []string
+	TABLE_LOOP:
+		for _, tableName := range tmpTableNames {
+			tableNames = append(tableNames, strings.Split(tableName, " join ")...)
+
+			for _, keyword := range selectKeywords {
+				if strings.Contains(tableName, keyword) {
+					break TABLE_LOOP
+				}
+			}
+		}
+
+		for _, tableName := range tableNames {
+			matches := tableRe.FindStringSubmatch(tableName)
+			if len(matches) == 0 {
+				continue
+			}
+
+			for i, name := range tableRe.SubexpNames() {
+				if name == "Table" {
+					queries = append(queries, query{
+						queryType: queryTypeSelect,
+						table:     matches[i],
+						pos:       sql.pos,
+					})
+				}
+			}
+		}
 	case strings.HasPrefix(sqlValue, "insert"):
 		matches := insertRe.FindStringSubmatch(sqlValue)
 		if len(matches) < 2 {
-			tableName, ok := tableForm(sql)
-			if !ok {
-				return query{}, false
-			}
+			tableNames := tableForm(sql)
 
-			return query{
-				queryType: queryTypeInsert,
-				table:     tableName,
-				pos:       sql.pos,
-			}, true
+			for _, tableName := range tableNames {
+				queries = append(queries, query{
+					queryType: queryTypeInsert,
+					table:     tableName,
+					pos:       sql.pos,
+				})
+			}
+			break
 		}
 
-		return query{
+		queries = append(queries, query{
 			queryType: queryTypeInsert,
 			table:     matches[1],
 			pos:       sql.pos,
-		}, true
+		})
 	case strings.HasPrefix(sqlValue, "update"):
-		matches := updateRe.FindStringSubmatch(sqlValue)
-		if len(matches) < 2 {
-			tableName, ok := tableForm(sql)
-			if !ok {
-				return query{}, false
-			}
-
-			return query{
-				queryType: queryTypeUpdate,
-				table:     tableName,
-				pos:       sql.pos,
-			}, true
+		afterUpdate := strings.TrimPrefix(sqlValue, "update ")
+		before, _, found := strings.Cut(afterUpdate, " set ")
+		if !found {
+			before = afterUpdate
 		}
 
-		return query{
-			queryType: queryTypeUpdate,
-			table:     matches[1],
-			pos:       sql.pos,
-		}, true
+		tmpTableNames := strings.Split(before, ",")
+		var tableNames []string
+		for _, tableName := range tmpTableNames {
+			tableNames = append(tableNames, strings.Split(tableName, " join ")...)
+		}
+
+		for _, tableName := range tableNames {
+			matches := tableRe.FindStringSubmatch(tableName)
+			if len(matches) == 0 {
+				continue
+			}
+
+			for i, name := range tableRe.SubexpNames() {
+				if name == "Table" {
+					queries = append(queries, query{
+						queryType: queryTypeUpdate,
+						table:     matches[i],
+						pos:       sql.pos,
+					})
+				}
+			}
+		}
 	case strings.HasPrefix(sqlValue, "delete"):
 		matches := deleteRe.FindStringSubmatch(sqlValue)
-		if len(matches) < 2 {
-			tableName, ok := tableForm(sql)
-			if !ok {
-				return query{}, false
+
+		for i, name := range deleteRe.SubexpNames() {
+			if name == "Table" {
+				queries = append(queries, query{
+					queryType: queryTypeDelete,
+					table:     matches[i],
+					pos:       sql.pos,
+				})
 			}
-
-			return query{
-				queryType: queryTypeDelete,
-				table:     tableName,
-				pos:       sql.pos,
-			}, true
 		}
-
-		return query{
-			queryType: queryTypeDelete,
-			table:     matches[1],
-			pos:       sql.pos,
-		}, true
 	}
 
-	return query{}, false
+	return queries
 }
 
-func tableForm(sql *stringLiteral) (string, bool) {
+func tableForm(sql *stringLiteral) []string {
 	filename, err := filepath.Rel(wd, sql.pos.Filename)
 	if err != nil {
 		log.Printf("failed to get relative path: %v", err)
-		return "", false
+		return nil
 	}
 
 	fmt.Printf("table name(%s:%d:%d): ", filename, sql.pos.Line, sql.pos.Column)
-	var tableName string
-	_, err = fmt.Scanln(&tableName)
+	var input string
+	_, err = fmt.Scanln(&input)
 	if err != nil {
-		return "", false
+		return nil
 	}
 
-	if tableName == "" {
-		return "", false
+	if input == "" {
+		return nil
 	}
 
-	return tableName, true
+	tableNames := strings.Split(input, ",")
+
+	return tableNames
 }
 
 type node struct {
@@ -688,7 +675,7 @@ func tableID(table string) string {
 }
 
 const (
-	mermaidHeader = "# DB Graph\n```mermaid\ngraph LR\n  classDef func fill:#7BCCAC,fill-opacity:0.5\n  classDef table fill:#ffa23e,fill-opacity:0.5\n"
+	mermaidHeader = "# DB Graph\n```mermaid\ngraph LR\n  classDef func fill:#1976D2,fill-opacity:0.5\n  classDef table fill:#795548,fill-opacity:0.5\n"
 	mermaidFooter = "```"
 )
 
@@ -759,7 +746,7 @@ func writeMermaid(nodes []*node) (string, error) {
 	}
 
 	if len(insertLinks) > 0 {
-		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#4CAF50,stroke-width:2px\n", strings.Join(insertLinks, ",")))
+		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#CDDC39,stroke-width:2px\n", strings.Join(insertLinks, ",")))
 		if err != nil {
 			return "", fmt.Errorf("failed to write link style: %w\n", err)
 		}
@@ -771,7 +758,7 @@ func writeMermaid(nodes []*node) (string, error) {
 		}
 	}
 	if len(selectLinks) > 0 {
-		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#2196F3,stroke-width:2px\n", strings.Join(selectLinks, ",")))
+		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#78909C,stroke-width:2px\n", strings.Join(selectLinks, ",")))
 		if err != nil {
 			return "", fmt.Errorf("failed to write link style: %w\n", err)
 		}
@@ -783,7 +770,7 @@ func writeMermaid(nodes []*node) (string, error) {
 		}
 	}
 	if len(callLinks) > 0 {
-		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#000000,stroke-width:2px\n", strings.Join(callLinks, ",")))
+		_, err = sb.WriteString(fmt.Sprintf("  linkStyle %s stroke:#BBDEFB,stroke-width:2px\n", strings.Join(callLinks, ",")))
 		if err != nil {
 			return "", fmt.Errorf("failed to write link style: %w\n", err)
 		}
