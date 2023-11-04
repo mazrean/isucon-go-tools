@@ -390,12 +390,94 @@ var (
 func analyzeSQL(sql *stringLiteral) []query {
 	sqlValue := strings.ToLower(sql.value)
 
+	strQueries := extractSubQueries(sqlValue)
+
+	var queries []query
+	for _, sqlValue := range strQueries {
+		newQueries := analyzeSQLWithoutSubQuery(sqlValue, sql)
+		queries = append(queries, newQueries...)
+	}
+
+	return queries
+}
+
+type subQuery struct {
+	query        string
+	bracketCount uint
+}
+
+var (
+	subQueryPrefixRe = regexp.MustCompile(`^\s*\(\s*select\s+`)
+)
+
+func extractSubQueries(sql string) []string {
+	var subQueries []string
+
+	rootQuery := ""
+	var subQueryStack []subQuery
+	for i := 0; i < len(sql); i++ {
+		r := sql[i]
+		switch r {
+		case '(':
+			match := subQueryPrefixRe.FindString(sql[i:])
+			if len(match) != 0 {
+				subQueryStack = append(subQueryStack, subQuery{
+					query:        match,
+					bracketCount: 0,
+				})
+				i += len(match)
+				continue
+			}
+
+			if len(subQueryStack) == 0 {
+				rootQuery += string(r)
+				continue
+			}
+
+			subQueryStack[len(subQueryStack)-1].bracketCount++
+			subQueryStack[len(subQueryStack)-1].query += string(r)
+		case ')':
+			if len(subQueryStack) == 0 {
+				rootQuery += string(r)
+				continue
+			}
+
+			if subQueryStack[len(subQueryStack)-1].bracketCount == 0 {
+				subQueries = append(subQueries, subQueryStack[len(subQueryStack)-1].query)
+				subQueryStack = subQueryStack[:len(subQueryStack)-1]
+				continue
+			}
+
+			subQueryStack[len(subQueryStack)-1].bracketCount--
+			subQueryStack[len(subQueryStack)-1].query += string(r)
+		default:
+			if len(subQueryStack) == 0 {
+				rootQuery += string(r)
+				continue
+			}
+
+			subQueryStack[len(subQueryStack)-1].query += string(r)
+		}
+	}
+
+	for _, subQuery := range subQueryStack {
+		subQueries = append(subQueries, subQuery.query)
+	}
+
+	if rootQuery != "" {
+		subQueries = append(subQueries, rootQuery)
+	}
+
+	return subQueries
+}
+
+func analyzeSQLWithoutSubQuery(sqlValue string, sql *stringLiteral) []query {
 	var queries []query
 	switch {
 	case strings.HasPrefix(sqlValue, "select"):
 		_, after, found := strings.Cut(sqlValue, " from ")
 		if !found {
-			tableNames := tableForm(sql)
+			tableNames := tableForm(sql, sqlValue)
 
 			for _, tableName := range tableNames {
 				queries = append(queries, query{
@@ -439,7 +521,7 @@ func analyzeSQL(sql *stringLiteral) []query {
 	case strings.HasPrefix(sqlValue, "insert"):
 		matches := insertRe.FindStringSubmatch(sqlValue)
 		if len(matches) < 2 {
-			tableNames := tableForm(sql)
+			tableNames := tableForm(sql, sqlValue)
 
 			for _, tableName := range tableNames {
 				queries = append(queries, query{
@@ -502,14 +584,16 @@ func analyzeSQL(sql *stringLiteral) []query {
 	return queries
 }
 
-func tableForm(sql *stringLiteral) []string {
+func tableForm(sql *stringLiteral, sqlValue string) []string {
 	filename, err := filepath.Rel(wd, sql.pos.Filename)
 	if err != nil {
 		log.Printf("failed to get relative path: %v", err)
 		return nil
 	}
 
-	fmt.Printf("table name(%s:%d:%d): ", filename, sql.pos.Line, sql.pos.Column)
+	fmt.Printf("query:%s\n", sqlValue)
+	fmt.Printf("position: %s:%d:%d\n", filename, sql.pos.Line, sql.pos.Column)
+	fmt.Print("table name?: ")
 	var input string
 	_, err = fmt.Scanln(&input)
 	if err != nil {
