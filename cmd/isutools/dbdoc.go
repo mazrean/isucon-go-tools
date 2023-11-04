@@ -41,7 +41,7 @@ func (ss *sliceString) Set(value string) error {
 }
 
 func init() {
-	dbDocFlagSet.StringVar(&dst, "dst", "./isudoc", "destination directory")
+	dbDocFlagSet.StringVar(&dst, "dst", "./dbdoc.md", "destination file")
 	dbDocFlagSet.Var(&ignores, "ignore", "ignore function")
 	dbDocFlagSet.Var(&ignorePrefixes, "ignorePrefix", "ignore function")
 }
@@ -80,7 +80,17 @@ func dbDoc(args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to write mermaid: %w", err)
 	}
-	println(mermaid)
+
+	f, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("failed to make directory: %w", err)
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(mermaid)
+	if err != nil {
+		return fmt.Errorf("failed to write mermaid: %w", err)
+	}
 
 	return nil
 }
