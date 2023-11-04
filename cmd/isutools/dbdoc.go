@@ -127,7 +127,7 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 					continue
 				}
 
-				funcName := strings.TrimPrefix(strings.Replace(def.FullName(), pkg.Module.Path, "", 1), ".")
+				funcName := def.Name()
 				funcs = append(funcs, function{
 					id:      def.Id(),
 					name:    funcName,
@@ -401,7 +401,7 @@ func checkValue(v ssa.Value, pos token.Position) (*stringLiteral, bool) {
 
 var (
 	tableRe        = regexp.MustCompile("^\\s*[\\[\"'`]?(?P<Table>\\w+)[\\]\"'`]?\\s*")
-	insertRe       = regexp.MustCompile("^insert\\s+into\\s+[\\[\"'`]?(?P<Table>\\w+)[\\]\"'`]?\\s*")
+	insertRe       = regexp.MustCompile("^insert\\s+(ignore\\s+)?(into\\s+)?[\\[\"'`]?(?P<Table>\\w+)[\\]\"'`]?\\s*")
 	deleteRe       = regexp.MustCompile("^delete\\s+from\\s+[\\[\"'`]?(?P<Table>\\w+)[\\]\"'`]?\\s*")
 	selectKeywords = []string{" where ", " group by ", " having ", " window ", " order by ", "limit ", " for "}
 )
@@ -539,24 +539,16 @@ func analyzeSQLWithoutSubQuery(sqlValue string, sql *stringLiteral) []query {
 		}
 	case strings.HasPrefix(sqlValue, "insert"):
 		matches := insertRe.FindStringSubmatch(sqlValue)
-		if len(matches) < 2 {
-			tableNames := tableForm(sql, sqlValue)
 
-			for _, tableName := range tableNames {
+		for i, name := range insertRe.SubexpNames() {
+			if name == "Table" {
 				queries = append(queries, query{
 					queryType: queryTypeInsert,
-					table:     tableName,
+					table:     matches[i],
 					pos:       sql.pos,
 				})
 			}
-			break
 		}
-
-		queries = append(queries, query{
-			queryType: queryTypeInsert,
-			table:     matches[1],
-			pos:       sql.pos,
-		})
 	case strings.HasPrefix(sqlValue, "update"):
 		afterUpdate := strings.TrimPrefix(sqlValue, "update ")
 		before, _, found := strings.Cut(afterUpdate, " set ")
@@ -819,10 +811,20 @@ FUNC_LOOP:
 }
 
 func funcID(functionID string) string {
+	functionID = strings.Replace(functionID, "(", "", -1)
+	functionID = strings.Replace(functionID, ")", "", -1)
+	functionID = strings.Replace(functionID, "[", "", -1)
+	functionID = strings.Replace(functionID, "]", "", -1)
+
 	return fmt.Sprintf("func:%s", functionID)
 }
 
 func tableID(table string) string {
+	table = strings.Replace(table, "(", "", -1)
+	table = strings.Replace(table, ")", "", -1)
+	table = strings.Replace(table, "[", "", -1)
+	table = strings.Replace(table, "]", "", -1)
+
 	return fmt.Sprintf("table:%s", table)
 }
 
