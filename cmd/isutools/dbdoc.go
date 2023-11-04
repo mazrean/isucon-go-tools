@@ -85,172 +85,17 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 					continue
 				}
 
-				var queries []query
-				var calls []string
-				for _, block := range ssaFunc.Blocks {
-					for _, instr := range block.Instrs {
-						switch instr := instr.(type) {
-						case *ssa.BinOp:
-							var pos token.Position
-							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
-								if val == nil {
-									continue
-								}
+				queries, calls := analyzeFuncBody(ssaFunc.Blocks, def, fset)
 
-								pos = fset.Position(val.Pos())
-								if pos.IsValid() {
-									break
-								}
-							}
-							newQueries := newQueryFromValue(pos, instr.X)
-							queries = append(queries, newQueries...)
-
-							for _, val := range []interface{ Pos() token.Pos }{instr.Y, instr, def} {
-								if val == nil {
-									continue
-								}
-
-								pos = fset.Position(val.Pos())
-								if pos.IsValid() {
-									break
-								}
-							}
-							newQueries = newQueryFromValue(pos, instr.Y)
-							queries = append(queries, newQueries...)
-						case *ssa.ChangeType:
-							var pos token.Position
-							for _, val := range []interface{ Pos() token.Pos }{instr, def} {
-								if val == nil {
-									continue
-								}
-
-								pos = fset.Position(val.Pos())
-								if pos.IsValid() {
-									break
-								}
-							}
-							newQueries := newQueryFromValue(pos, instr.X)
-							queries = append(queries, newQueries...)
-						case *ssa.Convert:
-							var pos token.Position
-							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
-								if val == nil {
-									continue
-								}
-
-								pos = fset.Position(val.Pos())
-								if pos.IsValid() {
-									break
-								}
-							}
-							newQueries := newQueryFromValue(pos, instr.X)
-							queries = append(queries, newQueries...)
-						case *ssa.MakeClosure:
-							for _, bind := range instr.Bindings {
-								var pos token.Position
-								for _, val := range []interface{ Pos() token.Pos }{bind, instr, def} {
-									if val == nil {
-										continue
-									}
-
-									pos = fset.Position(val.Pos())
-									if pos.IsValid() {
-										break
-									}
-								}
-								newQueries := newQueryFromValue(pos, bind)
-								queries = append(queries, newQueries...)
-							}
-						case *ssa.MultiConvert:
-							var pos token.Position
-							for _, val := range []interface{ Pos() token.Pos }{instr.X, instr, def} {
-								if val == nil {
-									continue
-								}
-
-								pos = fset.Position(val.Pos())
-								if pos.IsValid() {
-									break
-								}
-							}
-							newQueries := newQueryFromValue(pos, instr.X)
-							queries = append(queries, newQueries...)
-						case *ssa.Store:
-							var pos token.Position
-							for _, val := range []interface{ Pos() token.Pos }{instr.Val, instr, def} {
-								if val == nil {
-									continue
-								}
-
-								pos = fset.Position(val.Pos())
-								if pos.IsValid() {
-									break
-								}
-							}
-							newQueries := newQueryFromValue(pos, instr.Val)
-							queries = append(queries, newQueries...)
-						case *ssa.Call:
-							if f, ok := instr.Call.Value.(*ssa.Function); ok {
-								calls = append(calls, f.Object().Id())
-							}
-
-							for _, arg := range instr.Call.Args {
-								var pos token.Position
-								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Common(), instr, def} {
-									if val == nil {
-										continue
-									}
-
-									pos = fset.Position(val.Pos())
-									if pos.IsValid() {
-										break
-									}
-								}
-								newQueries := newQueryFromValue(pos, arg)
-								queries = append(queries, newQueries...)
-							}
-						case *ssa.Defer:
-							if f, ok := instr.Call.Value.(*ssa.Function); ok {
-								calls = append(calls, f.Object().Id())
-							}
-
-							for _, arg := range instr.Call.Args {
-								var pos token.Position
-								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Common(), instr, def} {
-									if val == nil {
-										continue
-									}
-
-									pos = fset.Position(val.Pos())
-									if pos.IsValid() {
-										break
-									}
-								}
-								newQueries := newQueryFromValue(pos, arg)
-								queries = append(queries, newQueries...)
-							}
-						case *ssa.Go:
-							if f, ok := instr.Call.Value.(*ssa.Function); ok {
-								calls = append(calls, f.Object().Id())
-							}
-
-							for _, arg := range instr.Call.Args {
-								var pos token.Position
-								for _, val := range []interface{ Pos() token.Pos }{arg, instr.Common(), instr, def} {
-									if val == nil {
-										continue
-									}
-
-									pos = fset.Position(val.Pos())
-									if pos.IsValid() {
-										break
-									}
-								}
-								newQueries := newQueryFromValue(pos, arg)
-								queries = append(queries, newQueries...)
-							}
-						}
+				for _, anonFunc := range ssaFunc.AnonFuncs {
+					var def poser = anonFunc
+					if !anonFunc.Pos().IsValid() {
+						def = ssaFunc
 					}
+
+					anonQueries, anonCalls := analyzeFuncBody(anonFunc.Blocks, def, fset)
+					queries = append(queries, anonQueries...)
+					calls = append(calls, anonCalls...)
 				}
 
 				if len(queries) == 0 && len(calls) == 0 {
@@ -269,6 +114,182 @@ func buildFuncs(fset *token.FileSet, pkgs []*packages.Package, ssaProgram *ssa.P
 	}
 
 	return funcs, nil
+}
+
+type poser interface {
+	Pos() token.Pos
+}
+
+func analyzeFuncBody(blocks []*ssa.BasicBlock, def poser, fset *token.FileSet) ([]query, []string) {
+	var queries []query
+	var calls []string
+	for _, block := range blocks {
+		for _, instr := range block.Instrs {
+			switch instr := instr.(type) {
+			case *ssa.BinOp:
+				var pos token.Position
+				for _, val := range []poser{instr.X, instr, def} {
+					if val == nil {
+						continue
+					}
+
+					pos = fset.Position(val.Pos())
+					if pos.IsValid() {
+						break
+					}
+				}
+				newQueries := newQueryFromValue(pos, instr.X)
+				queries = append(queries, newQueries...)
+
+				for _, val := range []poser{instr.Y, instr, def} {
+					if val == nil {
+						continue
+					}
+
+					pos = fset.Position(val.Pos())
+					if pos.IsValid() {
+						break
+					}
+				}
+				newQueries = newQueryFromValue(pos, instr.Y)
+				queries = append(queries, newQueries...)
+			case *ssa.ChangeType:
+				var pos token.Position
+				for _, val := range []poser{instr, def} {
+					if val == nil {
+						continue
+					}
+
+					pos = fset.Position(val.Pos())
+					if pos.IsValid() {
+						break
+					}
+				}
+				newQueries := newQueryFromValue(pos, instr.X)
+				queries = append(queries, newQueries...)
+			case *ssa.Convert:
+				var pos token.Position
+				for _, val := range []poser{instr.X, instr, def} {
+					if val == nil {
+						continue
+					}
+
+					pos = fset.Position(val.Pos())
+					if pos.IsValid() {
+						break
+					}
+				}
+				newQueries := newQueryFromValue(pos, instr.X)
+				queries = append(queries, newQueries...)
+			case *ssa.MakeClosure:
+				for _, bind := range instr.Bindings {
+					var pos token.Position
+					for _, val := range []poser{bind, instr, def} {
+						if val == nil {
+							continue
+						}
+
+						pos = fset.Position(val.Pos())
+						if pos.IsValid() {
+							break
+						}
+					}
+					newQueries := newQueryFromValue(pos, bind)
+					queries = append(queries, newQueries...)
+				}
+			case *ssa.MultiConvert:
+				var pos token.Position
+				for _, val := range []poser{instr.X, instr, def} {
+					if val == nil {
+						continue
+					}
+
+					pos = fset.Position(val.Pos())
+					if pos.IsValid() {
+						break
+					}
+				}
+				newQueries := newQueryFromValue(pos, instr.X)
+				queries = append(queries, newQueries...)
+			case *ssa.Store:
+				var pos token.Position
+				for _, val := range []poser{instr.Val, instr, def} {
+					if val == nil {
+						continue
+					}
+
+					pos = fset.Position(val.Pos())
+					if pos.IsValid() {
+						break
+					}
+				}
+				newQueries := newQueryFromValue(pos, instr.Val)
+				queries = append(queries, newQueries...)
+			case *ssa.Call:
+				if f, ok := instr.Call.Value.(*ssa.Function); ok {
+					calls = append(calls, f.Object().Id())
+				}
+
+				for _, arg := range instr.Call.Args {
+					var pos token.Position
+					for _, val := range []poser{arg, instr.Common(), instr, def} {
+						if val == nil {
+							continue
+						}
+
+						pos = fset.Position(val.Pos())
+						if pos.IsValid() {
+							break
+						}
+					}
+					newQueries := newQueryFromValue(pos, arg)
+					queries = append(queries, newQueries...)
+				}
+			case *ssa.Defer:
+				if f, ok := instr.Call.Value.(*ssa.Function); ok {
+					calls = append(calls, f.Object().Id())
+				}
+
+				for _, arg := range instr.Call.Args {
+					var pos token.Position
+					for _, val := range []poser{arg, instr.Common(), instr, def} {
+						if val == nil {
+							continue
+						}
+
+						pos = fset.Position(val.Pos())
+						if pos.IsValid() {
+							break
+						}
+					}
+					newQueries := newQueryFromValue(pos, arg)
+					queries = append(queries, newQueries...)
+				}
+			case *ssa.Go:
+				if f, ok := instr.Call.Value.(*ssa.Function); ok {
+					calls = append(calls, f.Object().Id())
+				}
+
+				for _, arg := range instr.Call.Args {
+					var pos token.Position
+					for _, val := range []poser{arg, instr.Common(), instr, def} {
+						if val == nil {
+							continue
+						}
+
+						pos = fset.Position(val.Pos())
+						if pos.IsValid() {
+							break
+						}
+					}
+					newQueries := newQueryFromValue(pos, arg)
+					queries = append(queries, newQueries...)
+				}
+			}
+		}
+	}
+
+	return queries, calls
 }
 
 type function struct {
