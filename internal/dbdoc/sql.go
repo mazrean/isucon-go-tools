@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/mazrean/isucon-go-tools/pkg/list"
 )
 
 var (
@@ -24,6 +26,9 @@ func AnalyzeSQL(ctx *context, sql stringLiteral) []query {
 	var queries []query
 	for _, sqlValue := range strQueries {
 		newQueries := analyzeSQLWithoutSubQuery(ctx, sqlValue, sql.pos)
+		for _, query := range newQueries {
+			fmt.Printf("%s(%s): %s\n", query.queryType, query.table, sqlValue)
+		}
 		queries = append(queries, newQueries...)
 	}
 
@@ -43,53 +48,49 @@ func extractSubQueries(ctx *context, sql string) []string {
 	}
 
 	rootQuery := ""
-	var subQueryStack []subQuery
+	subQueryStack := list.NewStack[*subQuery]()
 	for i := 0; i < len(sql); i++ {
 		r := sql[i]
 		switch r {
 		case '(':
+			if subQuery, ok := subQueryStack.Peek(); ok {
+				subQuery.bracketCount++
+				subQuery.query += string(r)
+			} else {
+				rootQuery += string(r)
+			}
+
 			match := subQueryPrefixRe.FindString(sql[i:])
 			if len(match) != 0 {
-				subQueryStack = append(subQueryStack, subQuery{
+				subQueryStack.Push(&subQuery{
 					query:        match,
 					bracketCount: 0,
 				})
 				i += len(match)
 				continue
 			}
-
-			if len(subQueryStack) == 0 {
-				rootQuery += string(r)
-				continue
-			}
-
-			subQueryStack[len(subQueryStack)-1].bracketCount++
-			subQueryStack[len(subQueryStack)-1].query += string(r)
 		case ')':
-			if len(subQueryStack) == 0 {
+			if subQuery, ok := subQueryStack.Peek(); ok && subQuery.bracketCount == 0 {
+				subQueries = append(subQueries, subQuery.query)
+				subQueryStack.Pop()
+			}
+
+			if subQuery, ok := subQueryStack.Peek(); ok {
+				subQuery.bracketCount--
+				subQuery.query += string(r)
+			} else {
 				rootQuery += string(r)
-				continue
 			}
-
-			if subQueryStack[len(subQueryStack)-1].bracketCount == 0 {
-				subQueries = append(subQueries, subQueryStack[len(subQueryStack)-1].query)
-				subQueryStack = subQueryStack[:len(subQueryStack)-1]
-				continue
-			}
-
-			subQueryStack[len(subQueryStack)-1].bracketCount--
-			subQueryStack[len(subQueryStack)-1].query += string(r)
 		default:
-			if len(subQueryStack) == 0 {
+			if subQuery, ok := subQueryStack.Peek(); ok {
+				subQuery.query += string(r)
+			} else {
 				rootQuery += string(r)
-				continue
 			}
-
-			subQueryStack[len(subQueryStack)-1].query += string(r)
 		}
 	}
 
-	for _, subQuery := range subQueryStack {
+	for subQuery, ok := subQueryStack.Pop(); ok; subQuery, ok = subQueryStack.Pop() {
 		subQueries = append(subQueries, subQuery.query)
 	}
 

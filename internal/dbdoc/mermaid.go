@@ -10,7 +10,8 @@ import (
 
 const (
 	mermaidHeader = "# DB Graph\n" +
-		"```mermaidgraph LR\n" +
+		"```mermaid\n" +
+		"graph LR\n" +
 		"  classDef func fill:" + funcNodeColor + ",fill-opacity:0.5\n" +
 		"  classDef table fill:" + tableNodeColor + ",fill-opacity:0.5\n"
 	mermaidFooter = "```"
@@ -90,31 +91,31 @@ func writeMermaid(w io.StringWriter, nodes []*node) error {
 	}
 
 	if len(insertLinks) > 0 {
-		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", insertLinkColor, strings.Join(insertLinks, ",")))
+		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", strings.Join(insertLinks, ","), insertLinkColor))
 		if err != nil {
 			return fmt.Errorf("failed to write link style: %w\n", err)
 		}
 	}
 	if len(deleteLinks) > 0 {
-		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", deleteLinkColor, strings.Join(deleteLinks, ",")))
+		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", strings.Join(deleteLinks, ","), deleteLinkColor))
 		if err != nil {
 			return fmt.Errorf("failed to write link style: %w\n", err)
 		}
 	}
 	if len(selectLinks) > 0 {
-		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", selectLinkColor, strings.Join(selectLinks, ",")))
+		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", strings.Join(selectLinks, ","), selectLinkColor))
 		if err != nil {
 			return fmt.Errorf("failed to write link style: %w\n", err)
 		}
 	}
 	if len(updateLinks) > 0 {
-		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", updateLinkColor, strings.Join(updateLinks, ",")))
+		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", strings.Join(updateLinks, ","), updateLinkColor))
 		if err != nil {
 			return fmt.Errorf("failed to write link style: %w\n", err)
 		}
 	}
 	if len(callLinks) > 0 {
-		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", callLinkColor, strings.Join(callLinks, ",")))
+		_, err = w.WriteString(fmt.Sprintf("  linkStyle %s stroke:%s,stroke-width:2px\n", strings.Join(callLinks, ","), callLinkColor))
 		if err != nil {
 			return fmt.Errorf("failed to write link style: %w\n", err)
 		}
