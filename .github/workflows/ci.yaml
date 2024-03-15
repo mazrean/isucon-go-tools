@@ -40,7 +40,6 @@ jobs:
         uses: codecov/codecov-action@v4.0.1
         with:
           file: ./coverage.txt
-          yml: ./codecov.yml
       - uses: actions/upload-artifact@v4
         with:
           name: coverage.txt
@@ -51,9 +50,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.4
+        uses: reviewdog/action-golangci-lint@v2.6
         with:
-          go-version-file: go.mod
+          go_version_file: go.mod
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
