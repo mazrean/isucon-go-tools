@@ -4,7 +4,7 @@ go 1.21.0
 
 require (
 	github.com/gostaticanalysis/analysisutil v0.7.1
-	github.com/prometheus/client_golang v1.17.0
+	github.com/prometheus/client_golang v1.19.0
 	github.com/stretchr/testify v1.8.4
 	github.com/valyala/fasthttp v1.52.0
 	golang.org/x/sync v0.7.0
@@ -60,17 +60,15 @@ require (
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/fiber/v2 v2.52.4
-	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.22
-	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mazrean/iwrapper v1.0.1
 	github.com/motoki317/sc v1.7.1
-	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
-	github.com/prometheus/common v0.44.0 // indirect
+	github.com/prometheus/client_model v0.5.0 // indirect
+	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.13.0
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0
 	golang.org/x/sys v0.19.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
 )
