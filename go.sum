@@ -102,8 +102,8 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
-github.com/motoki317/sc v1.7.1 h1:jf/zoTVi2Pl0VRdijgG8/cKXTatBbhbp4wKtAugpCeU=
-github.com/motoki317/sc v1.7.1/go.mod h1:JFH2KPwRS2StSoQuaMu0e4Kt7ebx439E6MW72Qqg2eQ=
+github.com/motoki317/sc v1.8.1 h1:2WcCDvuqwbthjEXey/AMoOsTbsXsyh3b6NTpTzJON7g=
+github.com/motoki317/sc v1.8.1/go.mod h1:hB1MaSQaz8ujgCJVRj7iiZQ7x0vivDcar4vrRi3e+EU=
 github.com/orisano/pixelmatch v0.0.0-20220722002657-fb0b55479cde/go.mod h1:nZgzbfBr3hhjoZnS66nKrHmduYNpc34ny7RK4z5/HM0=
 github.com/otiai10/copy v1.2.0 h1:HvG945u96iNadPoG2/Ja2+AUJeW5YuFQMixq9yirC+k=
 github.com/otiai10/copy v1.2.0/go.mod h1:rrF5dJ5F0t/EWSYODDu4j9/vEeYHMkc8jt0zJChqQWw=
