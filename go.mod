@@ -63,7 +63,7 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.22
-	github.com/mazrean/iwrapper v1.0.1
+	github.com/mazrean/iwrapper v1.0.2
 	github.com/motoki317/sc v1.7.1
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.48.0 // indirect
