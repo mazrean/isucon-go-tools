@@ -60,7 +60,7 @@ require (
 	github.com/felixge/fgprof v0.9.4
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/goccy/go-json v0.10.2
+	github.com/goccy/go-json v0.10.3
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/lib/pq v1.10.9
