@@ -39,7 +39,7 @@ func init() {
 
 	pgoFile, ok = os.LookupEnv("PGO_FILE")
 	if !ok {
-		pgoFile = "pgo.out"
+		pgoFile = "default.pgo"
 	}
 
 	profileType, ok = os.LookupEnv("PGO_PROFILE_TYPE")
