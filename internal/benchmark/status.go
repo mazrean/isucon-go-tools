@@ -10,11 +10,24 @@ import (
 	"strconv"
 	"sync/atomic"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
-	gobFile string
-	latest  *Benchmark
+	gobFile    string
+	latest     *Benchmark
+	scoreGauge = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "isutools",
+		Subsystem: "benchmark",
+		Name:      "score",
+	})
+	durationGauge = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "isutools",
+		Subsystem: "benchmark",
+		Name:      "duration",
+	})
 )
 
 type Benchmark struct {
@@ -44,6 +57,9 @@ func init() {
 	if err != nil {
 		log.Printf("failed to decode gob file(%s): %s\n", gobFile, err)
 	}
+
+	scoreGauge.Set(float64(latest.Score))
+	durationGauge.Set(latest.End.Sub(latest.Start).Seconds())
 }
 
 var (
@@ -74,6 +90,8 @@ func setScore(ctx context.Context, score int64) {
 		End:   *end.Load(),
 		Score: score,
 	}
+	scoreGauge.Set(float64(score))
+	durationGauge.Set(latest.End.Sub(latest.Start).Seconds())
 
 	f, err := os.Create(gobFile)
 	if err != nil {
@@ -101,5 +119,7 @@ func Register(mux *http.ServeMux) {
 		}
 
 		setScore(r.Context(), score)
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
