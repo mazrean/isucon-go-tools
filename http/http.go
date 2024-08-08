@@ -11,12 +11,13 @@ import (
 	"strings"
 	"time"
 
-	isutools "github.com/mazrean/isucon-go-tools"
 	isuhttpgen "github.com/mazrean/isucon-go-tools/http/internal/generate"
+	"github.com/mazrean/isucon-go-tools/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 )
 
 func ListenAndServe(addr string, handler http.Handler) error {
-	if isutools.Enable {
+	if config.Enable {
 		handler = StdMetricsMiddleware(handler)
 	}
 
@@ -29,7 +30,7 @@ func ListenAndServe(addr string, handler http.Handler) error {
 }
 
 func ListenAndServeTLS(addr, certFile, keyFile string, handler http.Handler) error {
-	if isutools.Enable {
+	if config.Enable {
 		handler = StdMetricsMiddleware(handler)
 	}
 
@@ -42,7 +43,7 @@ func ListenAndServeTLS(addr, certFile, keyFile string, handler http.Handler) err
 }
 
 func ServerListenAndServe(server *http.Server) error {
-	if isutools.Enable {
+	if config.Enable {
 		server.Handler = StdMetricsMiddleware(server.Handler)
 	}
 
@@ -55,7 +56,7 @@ func ServerListenAndServe(server *http.Server) error {
 }
 
 func ServerListenAndServeTLS(server *http.Server, certFile, keyFile string) error {
-	if isutools.Enable {
+	if config.Enable {
 		server.Handler = StdMetricsMiddleware(server.Handler)
 	}
 
@@ -141,8 +142,10 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 		return next
 	}
 
+	benchmark.Continue()
+
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		if !isutools.Enable {
+		if !config.Enable {
 			next.ServeHTTP(res, req)
 			return
 		}
@@ -209,7 +212,7 @@ func getPath(req *http.Request) string {
 }
 
 func ServerMuxHandle(mux *http.ServeMux, pattern string, handler http.Handler) {
-	if !isutools.Enable {
+	if !config.Enable {
 		mux.Handle(pattern, handler)
 		return
 	}
@@ -222,7 +225,7 @@ func ServerMuxHandle(mux *http.ServeMux, pattern string, handler http.Handler) {
 }
 
 func ServerMuxHandleFunc(mux *http.ServeMux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
-	if !isutools.Enable {
+	if !config.Enable {
 		mux.HandleFunc(pattern, handler)
 		return
 	}

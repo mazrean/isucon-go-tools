@@ -3,7 +3,7 @@ package pool
 import (
 	"sync"
 
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -21,7 +21,7 @@ type Pool[T ~*S, S any] struct {
 
 func New[T ~*S, S any](name string, fn func() T) *Pool[T, S] {
 	var counter *prometheus.CounterVec
-	if isutools.Enable {
+	if config.Enable {
 		counter = promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
@@ -68,7 +68,7 @@ type SlicePool[T ~*[]S, S any] struct {
 
 func NewSlice[T ~*[]S, S any](name string, fn func() T) *SlicePool[T, S] {
 	var counter *prometheus.CounterVec
-	if isutools.Enable {
+	if config.Enable {
 		counter = promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
@@ -119,7 +119,7 @@ type MapPool[T ~*map[K]S, K comparable, S any] struct {
 
 func NewMap[T ~*map[K]S, K comparable, S any](name string, fn func() T) *MapPool[T, K, S] {
 	var counter *prometheus.CounterVec
-	if isutools.Enable {
+	if config.Enable {
 		counter = promauto.NewCounterVec(prometheus.CounterOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,

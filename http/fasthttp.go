@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 	"github.com/valyala/fasthttp"
 )
 
 func FastListenAndServe(addr string, handler fasthttp.RequestHandler) error {
-	if isutools.Enable {
+	if config.Enable {
 		handler = FastMetricsMiddleware(handler)
 	}
 
@@ -24,7 +25,7 @@ func FastListenAndServe(addr string, handler fasthttp.RequestHandler) error {
 }
 
 func FastListenAndServeTLS(addr, certFile, keyFile string, handler fasthttp.RequestHandler) error {
-	if isutools.Enable {
+	if config.Enable {
 		handler = FastMetricsMiddleware(handler)
 	}
 
@@ -37,7 +38,7 @@ func FastListenAndServeTLS(addr, certFile, keyFile string, handler fasthttp.Requ
 }
 
 func FastListenAndServeTLSEmbed(addr string, certData, keyData []byte, handler fasthttp.RequestHandler) error {
-	if isutools.Enable {
+	if config.Enable {
 		handler = FastMetricsMiddleware(handler)
 	}
 
@@ -50,7 +51,7 @@ func FastListenAndServeTLSEmbed(addr string, certData, keyData []byte, handler f
 }
 
 func FastServerListenAndServe(server *fasthttp.Server, addr string) error {
-	if isutools.Enable {
+	if config.Enable {
 		server.Handler = FastMetricsMiddleware(server.Handler)
 	}
 
@@ -63,7 +64,7 @@ func FastServerListenAndServe(server *fasthttp.Server, addr string) error {
 }
 
 func FastServerListenAndServeTLS(server *fasthttp.Server, addr string, certFile, keyFile string) error {
-	if isutools.Enable {
+	if config.Enable {
 		server.Handler = FastMetricsMiddleware(server.Handler)
 	}
 
@@ -76,7 +77,7 @@ func FastServerListenAndServeTLS(server *fasthttp.Server, addr string, certFile,
 }
 
 func FastServerListenAndServeTLSEmbed(server *fasthttp.Server, addr string, certData, keyData []byte) error {
-	if isutools.Enable {
+	if config.Enable {
 		server.Handler = FastMetricsMiddleware(server.Handler)
 	}
 
@@ -90,10 +91,12 @@ func FastServerListenAndServeTLSEmbed(server *fasthttp.Server, addr string, cert
 
 func FastMetricsMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return fasthttp.RequestHandler(func(ctx *fasthttp.RequestCtx) {
-		if !isutools.Enable {
+		if !config.Enable {
 			next(ctx)
 			return
 		}
+
+		benchmark.Continue()
 
 		path := FilterFunc(string(ctx.Path()))
 		host := string(ctx.Host())

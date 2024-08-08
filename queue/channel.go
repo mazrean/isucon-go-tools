@@ -1,7 +1,7 @@
 package isuqueue
 
 import (
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -33,7 +33,7 @@ type Channel[T any] struct {
 
 func NewChannel[T any](name string, len int) *Channel[T] {
 	var metrics *prometheus.GaugeVec
-	if isutools.Enable && enableMetrics {
+	if config.Enable && enableMetrics {
 		metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,

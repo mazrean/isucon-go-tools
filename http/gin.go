@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 )
 
 func GinNew(engine *gin.Engine) *gin.Engine {
@@ -45,10 +46,12 @@ func GinRunTLS(engine *gin.Engine, addr, certFile, keyFile string) error {
 }
 
 func GinMetricsMiddleware(c *gin.Context) {
-	if !isutools.Enable {
+	if !config.Enable {
 		c.Next()
 		return
 	}
+
+	benchmark.Continue()
 
 	path := c.FullPath()
 	host := c.Request.Host

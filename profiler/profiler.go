@@ -1,4 +1,4 @@
-package isutools
+package profiler
 
 import (
 	"log"
@@ -7,21 +7,14 @@ import (
 	"runtime"
 	"strconv"
 
-	_ "net/http/pprof"
-
 	"github.com/felixge/fgprof"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// pprofとprometheusの設定
 func init() {
-	if !Enable {
+	if !config.Enable {
 		return
-	}
-
-	addr, ok := os.LookupEnv("METRICS_ADDR")
-	if !ok {
-		addr = ":6060"
 	}
 
 	strBlockRate, ok := os.LookupEnv("BLOCK_RATE")
@@ -44,13 +37,13 @@ func init() {
 		}
 	}
 
-	http.Handle("/metrics", promhttp.Handler())
-	http.Handle("/debug/fgprof", fgprof.Handler())
+	err := pyroscopeStart()
+	if err != nil {
+		log.Printf("failed to init pyroscope: %v", err)
+	}
+}
 
-	go func() {
-		err := http.ListenAndServe(addr, nil)
-		if err != nil {
-			log.Printf("failed to listen and serve(%s): %v", addr, err)
-		}
-	}()
+func Register(mux *http.ServeMux) {
+	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/debug/fgprof", fgprof.Handler())
 }

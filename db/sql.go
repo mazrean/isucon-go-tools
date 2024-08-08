@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -49,15 +49,15 @@ func DBMetricsSetup[T interface {
 				addr = config.Addr
 			}
 
-			if isutools.Enable {
+			if config.Enable {
 				openDriverName = "isumysql"
 			}
 		case "sqlite3":
-			if isutools.Enable {
+			if config.Enable {
 				openDriverName = "isusqlite3"
 			}
 		case "postgres":
-			if isutools.Enable {
+			if config.Enable {
 				openDriverName = "isupostgres"
 			}
 		}
@@ -101,7 +101,7 @@ func DBMetricsSetup[T interface {
 		db.SetConnMaxLifetime(0)
 		db.SetConnMaxIdleTime(0)
 
-		if isutools.Enable {
+		if config.Enable {
 			connID := connectionID.Add(1)
 			strConnID := strconv.FormatUint(connID, 10)
 

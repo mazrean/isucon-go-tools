@@ -4,12 +4,12 @@ import (
 	"sync/atomic"
 	"testing"
 
-	isutools "github.com/mazrean/isucon-go-tools"
 	isucache "github.com/mazrean/isucon-go-tools/cache"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 )
 
 func init() {
-	isutools.Enable = false
+	config.Enable = false
 }
 
 func BenchmarkMapStoreBalanced(b *testing.B) {

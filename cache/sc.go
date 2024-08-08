@@ -10,7 +10,7 @@ import (
 	"time"
 	"unsafe"
 
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 	"github.com/motoki317/sc"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -35,7 +35,7 @@ func New[K comparable, V any](name string, replaceFn func(ctx context.Context, k
 
 	cacheMap[name] = cache
 
-	if isutools.Enable {
+	if config.Enable {
 		promauto.NewGaugeFunc(prometheus.GaugeOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
@@ -97,7 +97,7 @@ func NewMap[K comparable, V any](name string) *Map[K, V] {
 		loadMetrics  *prometheus.GaugeVec
 		storeMetrics *prometheus.GaugeVec
 	)
-	if isutools.Enable {
+	if config.Enable {
 		loadMetrics = promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
@@ -296,7 +296,7 @@ func NewAtomicMap[K comparable, V *T, T any](name string) *AtomicMap[K, V, T] {
 		loadMetrics  *prometheus.GaugeVec
 		storeMetrics *prometheus.GaugeVec
 	)
-	if isutools.Enable {
+	if config.Enable {
 		loadMetrics = promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
@@ -521,7 +521,7 @@ func NewSlice[T any](name string, size int) *Slice[T] {
 		indexMetrics  prometheus.Histogram
 		lengthMetrics prometheus.Gauge
 	)
-	if isutools.Enable {
+	if config.Enable {
 		indexMetrics = promauto.NewHistogram(prometheus.HistogramOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,
@@ -702,7 +702,7 @@ func NewNoDeleteSlice[T any](name string, capacity, shard int) *NoDeleteSlice[T]
 	var (
 		lengthMetrics prometheus.Gauge
 	)
-	if isutools.Enable {
+	if config.Enable {
 		lengthMetrics = promauto.NewGauge(prometheus.GaugeOpts{
 			Namespace: prometheusNamespace,
 			Subsystem: prometheusSubsystem,

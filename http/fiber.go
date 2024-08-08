@@ -11,7 +11,8 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 )
 
 func FiberNew(conf ...fiber.Config) *fiber.App {
@@ -49,9 +50,11 @@ func FiberNew(conf ...fiber.Config) *fiber.App {
 
 func FiberMetricsMiddleware(next fiber.Handler) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if !isutools.Enable {
+		if !config.Enable {
 			return next(c)
 		}
+
+		benchmark.Continue()
 
 		path := c.Route().Path
 		host := c.Hostname()

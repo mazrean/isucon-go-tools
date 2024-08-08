@@ -4,7 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -35,7 +35,7 @@ func NewValue[T any](value T, name string) *Value[T] {
 }
 
 func (v *Value[T]) Read(f func(v *T)) {
-	if isutools.Enable {
+	if config.Enable {
 		timer := prometheus.NewTimer(lockHistVec.WithLabelValues(v.name, "read"))
 		defer timer.ObserveDuration()
 	}
@@ -47,7 +47,7 @@ func (v *Value[T]) Read(f func(v *T)) {
 }
 
 func (v *Value[T]) Write(f func(v *T)) {
-	if isutools.Enable {
+	if config.Enable {
 		timer := prometheus.NewTimer(lockHistVec.WithLabelValues(v.name, "write"))
 		defer timer.ObserveDuration()
 	}

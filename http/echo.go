@@ -12,7 +12,8 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/labstack/echo/v4"
-	isutools "github.com/mazrean/isucon-go-tools"
+	"github.com/mazrean/isucon-go-tools/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/internal/config"
 )
 
 var (
@@ -75,9 +76,11 @@ func (JSONSerializer) Deserialize(c echo.Context, i any) error {
 
 func EchoMetricsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		if !isutools.Enable {
+		if !config.Enable {
 			return next(c)
 		}
+
+		benchmark.Continue()
 
 		path := c.Path()
 		host := c.Request().Host
