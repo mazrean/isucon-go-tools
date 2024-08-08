@@ -2,6 +2,7 @@ package isuhttp
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -135,6 +136,11 @@ func (r *responseWriterWithMetrics) ReadFrom(src io.Reader) (int64, error) {
 }
 
 func StdMetricsMiddleware(next http.Handler) http.Handler {
+	// ServeMuxの場合はラップ済みなのでそのまま返す
+	if _, ok := next.(*http.ServeMux); !ok {
+		return next
+	}
+
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if !isutools.Enable {
 			next.ServeHTTP(res, req)
@@ -148,7 +154,7 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 			return rw
 		})
 
-		path := FilterFunc(req.URL.Path)
+		path := getPath(req)
 		host := req.Host
 		method := req.Method
 
@@ -180,4 +186,59 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 		reqCounterVec.WithLabelValues(statusCode, method, host, path).Inc()
 		resSizeHistogramVec.WithLabelValues(statusCode, method, path).Observe(metrics.resSize)
 	})
+}
+
+type pathCtxKey struct{}
+
+func SetPath(req *http.Request, path string) *http.Request {
+	return req.WithContext(context.WithValue(req.Context(), pathCtxKey{}, path))
+}
+
+func getPath(req *http.Request) string {
+	iPath := req.Context().Value(pathCtxKey{})
+	if iPath == nil {
+		return FilterFunc(req.URL.Path)
+	}
+
+	path, ok := iPath.(string)
+	if !ok {
+		return FilterFunc(req.URL.Path)
+	}
+
+	return path
+}
+
+func ServerMuxHandle(mux *http.ServeMux, pattern string, handler http.Handler) {
+	if !isutools.Enable {
+		mux.Handle(pattern, handler)
+		return
+	}
+
+	pathPattern := pathPattern(pattern)
+	mux.Handle(pattern, http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		req = SetPath(req, pathPattern)
+		StdMetricsMiddleware(handler).ServeHTTP(res, req)
+	}))
+}
+
+func ServerMuxHandleFunc(mux *http.ServeMux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
+	if !isutools.Enable {
+		mux.HandleFunc(pattern, handler)
+		return
+	}
+
+	pathPattern := pathPattern(pattern)
+	mux.HandleFunc(pattern, func(res http.ResponseWriter, req *http.Request) {
+		req = SetPath(req, pathPattern)
+
+		StdMetricsMiddleware(http.HandlerFunc(handler)).ServeHTTP(res, req)
+	})
+}
+
+func pathPattern(pattern string) string {
+	if _, after, found := strings.Cut(pattern, " "); found {
+		return after
+	}
+
+	return pattern
 }

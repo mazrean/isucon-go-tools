@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"go/format"
 	"go/types"
+	"log"
 	"reflect"
 
 	"github.com/gostaticanalysis/analysisutil"
@@ -16,16 +17,17 @@ import (
 )
 
 const (
-	httpPkgName        = "net/http"
-	httpServerTypeName = "Server"
-	apiPkgName         = "github.com/mazrean/isucon-go-tools/http"
-	apiPkgDefaultIdent = "isuhttp"
-	apiPrefix          = "Server"
+	httpPkgName           = "net/http"
+	httpServerTypeName    = "Server"
+	httpServerMuxTypeName = "ServeMux"
+	apiPkgName            = "github.com/mazrean/isucon-go-tools/http"
+	apiPkgDefaultIdent    = "isuhttp"
 )
 
 var (
-	httpFuncNames   = []string{"ListenAndServe", "ListenAndServeTLS"}
-	httpMethodNames = []string{"ListenAndServe", "ListenAndServeTLS"}
+	httpFuncNames      = []string{"ListenAndServe", "ListenAndServeTLS"}
+	httpMethodNames    = []string{"ListenAndServe", "ListenAndServeTLS"}
+	httpMuxMethodNames = []string{"Handle", "HandleFunc"}
 
 	importPkgs []*suggest.ImportInfo
 	Analyzer   = &analysis.Analyzer{
@@ -173,19 +175,33 @@ func serverStructSetting(pass *analysis.Pass) error {
 		return errors.New("failed to get ssa graph")
 	}
 
-	enginType := analysisutil.TypeOf(pass, httpPkgName, httpServerTypeName)
-	if enginType == nil {
-		return nil
+	var (
+		funcTypes      []*types.Func
+		apiFuncNameMap = map[*types.Func]string{}
+	)
+
+	serverType := analysisutil.TypeOf(pass, httpPkgName, httpServerTypeName)
+	if serverType != nil {
+		for _, methodName := range httpMethodNames {
+			funcType := analysisutil.MethodOf(serverType, methodName)
+			if funcType != nil {
+				funcTypes = append(funcTypes, funcType)
+			}
+
+			apiFuncNameMap[funcType] = httpServerTypeName + methodName
+		}
 	}
 
-	funcTypes := make([]*types.Func, 0, len(httpMethodNames))
-	for _, methodName := range httpMethodNames {
-		funcType := analysisutil.MethodOf(enginType, methodName)
-		if funcType == nil {
-			continue
-		}
+	serverMuxType := analysisutil.TypeOf(pass, httpPkgName, httpServerMuxTypeName)
+	if serverMuxType != nil {
+		for _, methodName := range httpMuxMethodNames {
+			funcType := analysisutil.MethodOf(serverMuxType, methodName)
+			if funcType != nil {
+				funcTypes = append(funcTypes, funcType)
+			}
 
-		funcTypes = append(funcTypes, funcType)
+			apiFuncNameMap[funcType] = httpServerMuxTypeName + methodName
+		}
 	}
 
 	callExprInfo, err := suggest.FindCallExpr(pass.Files, ssaGraph, funcTypes)
@@ -206,6 +222,12 @@ func serverStructSetting(pass *analysis.Pass) error {
 			continue
 		}
 
+		apiFuncName, ok := apiFuncNameMap[callExpr.FuncType]
+		if !ok {
+			log.Printf("failed to get api func name: %s", callExpr.FuncType.FullName())
+			continue
+		}
+
 		args := make([]ast.Expr, 0, len(callExpr.Call.Args)+1)
 		args = append(args, selectorExpr.X)
 		args = append(args, callExpr.Call.Args...)
@@ -213,7 +235,7 @@ func serverStructSetting(pass *analysis.Pass) error {
 		err := format.Node(&buf, pass.Fset, &ast.CallExpr{
 			Fun: &ast.SelectorExpr{
 				X:   ast.NewIdent(apiPkgDefaultIdent),
-				Sel: ast.NewIdent(apiPrefix + callExpr.FuncType.Name()),
+				Sel: ast.NewIdent(apiFuncName),
 			},
 			Args: args,
 		})
@@ -223,9 +245,9 @@ func serverStructSetting(pass *analysis.Pass) error {
 
 		pass.Report(analysis.Diagnostic{
 			Pos:     callExpr.Call.Pos(),
-			Message: fmt.Sprintf("should replace %s with (%s).%s%s", callExpr.FuncType.FullName(), apiPkgName, apiPrefix, callExpr.FuncType.Name()),
+			Message: fmt.Sprintf("should replace %s with (%s).%s", callExpr.FuncType.FullName(), apiPkgName, apiFuncName),
 			SuggestedFixes: []analysis.SuggestedFix{{
-				Message: fmt.Sprintf("replace %s with (%s).%s%s", callExpr.FuncType.FullName(), apiPkgName, apiPrefix, callExpr.FuncType.Name()),
+				Message: fmt.Sprintf("replace %s with (%s).%s", callExpr.FuncType.FullName(), apiPkgName, apiFuncName),
 				TextEdits: []analysis.TextEdit{{
 					Pos:     callExpr.Call.Pos(),
 					End:     callExpr.Call.End(),
