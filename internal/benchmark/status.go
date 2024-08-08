@@ -3,6 +3,7 @@ package benchmark
 import (
 	"context"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/mazrean/isucon-go-tools/internal/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -31,12 +33,16 @@ var (
 )
 
 type Benchmark struct {
-	Start time.Time
-	End   time.Time
-	Score int64
+	Start time.Time `json:"start"`
+	End   time.Time `json:"end"`
+	Score int64     `json:"score"`
 }
 
 func init() {
+	if !config.Enable {
+		return
+	}
+
 	var ok bool
 	gobFile, ok = os.LookupEnv("BENCHMARK_FILE")
 	if !ok {
@@ -121,5 +127,15 @@ func Register(mux *http.ServeMux) {
 		setScore(r.Context(), score)
 
 		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("GET /benchmark/latest", func(w http.ResponseWriter, r *http.Request) {
+		if latest == nil {
+			http.Error(w, "no latest benchmark", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(latest)
 	})
 }
