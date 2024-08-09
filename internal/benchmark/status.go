@@ -97,9 +97,18 @@ func SetEndHook(f func(context.Context, *Benchmark)) {
 }
 
 func setScore(ctx context.Context, score int64) {
+	end := end.Load()
+	if end == nil {
+		slog.Error("end time is not set",
+			slog.Time("start", start),
+			slog.Int64("score", score),
+		)
+		return
+	}
+
 	latest = &Benchmark{
 		Start: start,
-		End:   *end.Load(),
+		End:   *end,
 		Score: score,
 	}
 	scoreGauge.Set(float64(score))
