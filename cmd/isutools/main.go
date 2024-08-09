@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/mazrean/isucon-go-tools/v2/analysers/cache"
 	"github.com/mazrean/isucon-go-tools/v2/analysers/db"
 	"github.com/mazrean/isucon-go-tools/v2/analysers/echo"
@@ -16,17 +14,6 @@ import (
 )
 
 func main() {
-	if len(os.Args) >= 2 {
-		switch os.Args[1] {
-		case "dbdoc":
-			err := dbDoc(os.Args[2:])
-			if err != nil {
-				panic(err)
-			}
-
-			return
-		}
-	}
 	multichecker.Main(
 		embed.Analyzer,
 		echo.Analyzer,
