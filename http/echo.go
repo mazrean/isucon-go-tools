@@ -12,8 +12,8 @@ import (
 
 	"github.com/goccy/go-json"
 	"github.com/labstack/echo/v4"
-	"github.com/mazrean/isucon-go-tools/internal/benchmark"
-	"github.com/mazrean/isucon-go-tools/internal/config"
+	"github.com/mazrean/isucon-go-tools/v2/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/v2/internal/config"
 )
 
 var (

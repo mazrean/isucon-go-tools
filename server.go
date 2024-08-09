@@ -7,9 +7,9 @@ import (
 
 	_ "net/http/pprof"
 
-	"github.com/mazrean/isucon-go-tools/internal/benchmark"
-	"github.com/mazrean/isucon-go-tools/internal/config"
-	"github.com/mazrean/isucon-go-tools/profiler"
+	"github.com/mazrean/isucon-go-tools/v2/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/v2/internal/config"
+	"github.com/mazrean/isucon-go-tools/v2/profiler"
 )
 
 func init() {

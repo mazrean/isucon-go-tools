@@ -8,14 +8,14 @@ import (
 	"reflect"
 
 	"github.com/gostaticanalysis/analysisutil"
-	"github.com/mazrean/isucon-go-tools/pkg/suggest"
+	"github.com/mazrean/isucon-go-tools/v2/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
 )
 
 const (
 	fiberPkgName       = "github.com/gofiber/fiber/v2"
 	fiberFuncName      = "New"
-	apiPkgName         = "github.com/mazrean/isucon-go-tools/http"
+	apiPkgName         = "github.com/mazrean/isucon-go-tools/v2/http"
 	apiPkgDefaultIdent = "isuhttp"
 	apiFuncName        = "FiberNew"
 )

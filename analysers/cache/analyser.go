@@ -8,13 +8,13 @@ import (
 	"go/token"
 	"reflect"
 
-	"github.com/mazrean/isucon-go-tools/pkg/analyze"
-	"github.com/mazrean/isucon-go-tools/pkg/suggest"
+	"github.com/mazrean/isucon-go-tools/v2/pkg/analyze"
+	"github.com/mazrean/isucon-go-tools/v2/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
 )
 
 const (
-	cachePkgName         = "github.com/mazrean/isucon-go-tools/cache"
+	cachePkgName         = "github.com/mazrean/isucon-go-tools/v2/cache"
 	cachePkgDefaultIdent = "isucache"
 	cachePurgeFuncName   = "AllPurge"
 	initializeKeyword    = "initialize"

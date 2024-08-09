@@ -15,8 +15,8 @@ import (
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 	connectapi "github.com/grafana/pyroscope/pkg/api/connect"
-	"github.com/mazrean/isucon-go-tools/internal/benchmark"
-	"github.com/mazrean/isucon-go-tools/internal/config"
+	"github.com/mazrean/isucon-go-tools/v2/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/v2/internal/config"
 )
 
 var (

@@ -3,15 +3,15 @@ package main
 import (
 	"os"
 
-	"github.com/mazrean/isucon-go-tools/analysers/cache"
-	"github.com/mazrean/isucon-go-tools/analysers/db"
-	"github.com/mazrean/isucon-go-tools/analysers/echo"
-	"github.com/mazrean/isucon-go-tools/analysers/embed"
-	"github.com/mazrean/isucon-go-tools/analysers/fasthttp"
-	"github.com/mazrean/isucon-go-tools/analysers/fiber"
-	"github.com/mazrean/isucon-go-tools/analysers/gin"
-	"github.com/mazrean/isucon-go-tools/analysers/http"
-	"github.com/mazrean/isucon-go-tools/analysers/importer"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/cache"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/db"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/echo"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/embed"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/fasthttp"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/fiber"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/gin"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/http"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/importer"
 	"golang.org/x/tools/go/analysis/multichecker"
 )
 

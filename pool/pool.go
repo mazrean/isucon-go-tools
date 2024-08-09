@@ -3,7 +3,7 @@ package pool
 import (
 	"sync"
 
-	"github.com/mazrean/isucon-go-tools/internal/config"
+	"github.com/mazrean/isucon-go-tools/v2/internal/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )

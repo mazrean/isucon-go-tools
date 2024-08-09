@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mazrean/isucon-go-tools/pkg/analyze"
+	"github.com/mazrean/isucon-go-tools/v2/pkg/analyze"
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"

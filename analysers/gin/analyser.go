@@ -10,7 +10,7 @@ import (
 	"reflect"
 
 	"github.com/gostaticanalysis/analysisutil"
-	"github.com/mazrean/isucon-go-tools/pkg/suggest"
+	"github.com/mazrean/isucon-go-tools/v2/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/buildssa"
 )
@@ -18,7 +18,7 @@ import (
 const (
 	ginPkgName         = "github.com/gin-gonic/gin"
 	ginEnginTypeName   = "Engine"
-	apiPkgName         = "github.com/mazrean/isucon-go-tools/http"
+	apiPkgName         = "github.com/mazrean/isucon-go-tools/v2/http"
 	apiPkgDefaultIdent = "isuhttp"
 	apiPrefix          = "Gin"
 	apiFuncName        = "GinNew"

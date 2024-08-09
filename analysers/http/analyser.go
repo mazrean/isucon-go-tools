@@ -11,7 +11,7 @@ import (
 	"reflect"
 
 	"github.com/gostaticanalysis/analysisutil"
-	"github.com/mazrean/isucon-go-tools/pkg/suggest"
+	"github.com/mazrean/isucon-go-tools/v2/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/buildssa"
 )
@@ -20,7 +20,7 @@ const (
 	httpPkgName           = "net/http"
 	httpServerTypeName    = "Server"
 	httpServerMuxTypeName = "ServeMux"
-	apiPkgName            = "github.com/mazrean/isucon-go-tools/http"
+	apiPkgName            = "github.com/mazrean/isucon-go-tools/v2/http"
 	apiPkgDefaultIdent    = "isuhttp"
 )
 

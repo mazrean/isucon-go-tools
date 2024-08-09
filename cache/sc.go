@@ -10,7 +10,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/mazrean/isucon-go-tools/internal/config"
+	"github.com/mazrean/isucon-go-tools/v2/internal/config"
 	"github.com/motoki317/sc"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

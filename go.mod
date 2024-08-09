@@ -1,6 +1,6 @@
-module github.com/mazrean/isucon-go-tools
+module github.com/mazrean/isucon-go-tools/v2
 
-go 1.21.0
+go 1.22.6
 
 require (
 	connectrpc.com/connect v1.16.2

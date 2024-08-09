@@ -5,7 +5,7 @@ import (
 	"database/sql/driver"
 	"time"
 
-	isudbgen "github.com/mazrean/isucon-go-tools/db/internal/generate"
+	isudbgen "github.com/mazrean/isucon-go-tools/v2/db/internal/generate"
 )
 
 type wrappedDriver struct {

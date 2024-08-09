@@ -8,14 +8,14 @@ import (
 	"reflect"
 
 	"github.com/gostaticanalysis/analysisutil"
-	"github.com/mazrean/isucon-go-tools/pkg/suggest"
+	"github.com/mazrean/isucon-go-tools/v2/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
 )
 
 const (
 	sqlPkgName        = "database/sql"
 	sqlxPkgName       = "github.com/jmoiron/sqlx"
-	dbPkgName         = "github.com/mazrean/isucon-go-tools/db"
+	dbPkgName         = "github.com/mazrean/isucon-go-tools/v2/db"
 	dbPkgDefaultIdent = "isudb"
 	dbFuncName        = "DBMetricsSetup"
 )

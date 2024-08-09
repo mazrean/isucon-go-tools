@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mazrean/isucon-go-tools/internal/benchmark"
-	"github.com/mazrean/isucon-go-tools/internal/config"
+	"github.com/mazrean/isucon-go-tools/v2/internal/benchmark"
+	"github.com/mazrean/isucon-go-tools/v2/internal/config"
 	"github.com/valyala/fasthttp"
 )
 
