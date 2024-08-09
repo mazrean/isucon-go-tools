@@ -57,8 +57,8 @@ func init() {
 
 func pyroscopeStart() error {
 	tagMap := map[string]string{}
-	if config.HostName != "" {
-		tagMap["hostname"] = config.HostName
+	if config.Host != "" {
+		tagMap["hostname"] = config.Host
 	}
 
 	_, err := pyroscope.Start(pyroscope.Config{

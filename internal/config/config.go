@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	Enable   = true
-	HostName string
+	Enable = true
+	Host   string
+	Addr   = ":6060"
 )
 
 func init() {
@@ -24,8 +25,13 @@ func init() {
 		Enable = enable
 	}
 
-	hostName, ok := os.LookupEnv("HOST_NAME")
+	host, ok := os.LookupEnv("ISUTOOLS_HOST_NAME")
 	if ok {
-		HostName = hostName
+		Host = host
+	}
+
+	addr, ok := os.LookupEnv("ISUTOOLS_ADDR")
+	if ok {
+		Addr = addr
 	}
 }
