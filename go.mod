@@ -6,7 +6,7 @@ require (
 	connectrpc.com/connect v1.16.2
 	github.com/gostaticanalysis/analysisutil v0.7.1
 	github.com/grafana/pyroscope v1.7.1
-	github.com/grafana/pyroscope-go v1.0.3
+	github.com/grafana/pyroscope-go v1.1.1
 	github.com/grafana/pyroscope/api v0.4.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/stretchr/testify v1.9.0
