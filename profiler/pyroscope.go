@@ -142,7 +142,7 @@ func DownloadPGO(ctx context.Context, b *benchmark.Benchmark) {
 		)...,
 	)
 
-	res, err := client.SelectMergeSpanProfile(ctx, connect.NewRequest(&querierv1.SelectMergeSpanProfileRequest{
+	res, err := client.SelectMergeProfile(ctx, connect.NewRequest(&querierv1.SelectMergeProfileRequest{
 		ProfileTypeID: profileType,
 		Start:         b.Start.UnixMilli(),
 		End:           b.End.UnixMilli(),
