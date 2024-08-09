@@ -138,7 +138,7 @@ func (r *responseWriterWithMetrics) ReadFrom(src io.Reader) (int64, error) {
 
 func StdMetricsMiddleware(next http.Handler) http.Handler {
 	// ServeMuxの場合はラップ済みなのでそのまま返す
-	if _, ok := next.(*http.ServeMux); !ok {
+	if _, ok := next.(*http.ServeMux); ok {
 		return next
 	}
 
