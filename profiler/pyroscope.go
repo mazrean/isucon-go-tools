@@ -94,24 +94,42 @@ func pyroscopeStart() error {
 type slogLogger struct{}
 
 func (slogLogger) Infof(format string, args ...any) {
+	ctx := context.Background()
+
+	if !slog.Default().Enabled(ctx, slog.LevelInfo) {
+		return
+	}
+
 	var pcs [1]uintptr
 	runtime.Callers(2, pcs[:])
 	r := slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf(format, args...), pcs[0])
-	slog.Default().Handler().Handle(context.Background(), r)
+	slog.Default().Handler().Handle(ctx, r)
 }
 
 func (slogLogger) Debugf(format string, args ...any) {
+	ctx := context.Background()
+
+	if !slog.Default().Enabled(ctx, slog.LevelDebug) {
+		return
+	}
+
 	var pcs [1]uintptr
 	runtime.Callers(2, pcs[:])
 	r := slog.NewRecord(time.Now(), slog.LevelDebug, fmt.Sprintf(format, args...), pcs[0])
-	slog.Default().Handler().Handle(context.Background(), r)
+	slog.Default().Handler().Handle(ctx, r)
 }
 
 func (slogLogger) Errorf(format string, args ...any) {
+	ctx := context.Background()
+
+	if !slog.Default().Enabled(ctx, slog.LevelError) {
+		return
+	}
+
 	var pcs [1]uintptr
 	runtime.Callers(2, pcs[:])
 	r := slog.NewRecord(time.Now(), slog.LevelError, fmt.Sprintf(format, args...), pcs[0])
-	slog.Default().Handler().Handle(context.Background(), r)
+	slog.Default().Handler().Handle(ctx, r)
 }
 
 func DownloadPGO(ctx context.Context, b *benchmark.Benchmark) {
