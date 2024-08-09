@@ -142,13 +142,13 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 		return next
 	}
 
-	benchmark.Continue()
-
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if !config.Enable {
 			next.ServeHTTP(res, req)
 			return
 		}
+
+		benchmark.Continue()
 
 		var metrics *responseWriterMetrics
 		wrappedRes := isuhttpgen.ResponseWriterWrapper(res, func(w http.ResponseWriter) isuhttpgen.ResponseWriter {
