@@ -2,7 +2,7 @@ package query
 
 import (
 	"errors"
-	"log"
+	"log/slog"
 	"strings"
 )
 
@@ -39,7 +39,10 @@ func (b *BulkUpdate) Add(key any, values ...any) error {
 		b.values[i] = append(b.values[i], values[i])
 	}
 	if len(values) > len(b.values) {
-		log.Println("warning: too many values")
+		slog.Warn("too many values",
+			slog.Int("expected", len(b.values)),
+			slog.Int("actual", len(values)),
+		)
 	}
 
 	return nil

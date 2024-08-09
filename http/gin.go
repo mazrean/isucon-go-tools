@@ -2,7 +2,7 @@ package isuhttp
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -21,7 +21,9 @@ func GinNew(engine *gin.Engine) *gin.Engine {
 func GinRun(engine *gin.Engine, addrs ...string) error {
 	listener, ok, err := newUnixDomainSockListener()
 	if err != nil {
-		log.Printf("failed to init unix domain socket: %s\n", err)
+		slog.Error("failed to create unix domain socket listener",
+			slog.String("error", err.Error()),
+		)
 	}
 
 	if ok {
@@ -34,7 +36,9 @@ func GinRun(engine *gin.Engine, addrs ...string) error {
 func GinRunTLS(engine *gin.Engine, addr, certFile, keyFile string) error {
 	listener, ok, err := newUnixDomainSockListener()
 	if err != nil {
-		log.Printf("failed to init unix domain socket: %s\n", err)
+		slog.Error("failed to create unix domain socket listener",
+			slog.String("error", err.Error()),
+		)
 	}
 
 	if ok {

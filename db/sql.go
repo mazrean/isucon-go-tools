@@ -2,7 +2,7 @@ package isudb
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -37,7 +37,11 @@ func DBMetricsSetup[T interface {
 			if fixInterpolateParams {
 				config, err := mysql.ParseDSN(dataSourceName)
 				if err != nil {
-					log.Printf("failed to parse dsn: %v\n", err)
+					slog.Error("failed to parse DSN",
+						slog.String("driver", driverName),
+						slog.String("dsn", dataSourceName),
+						slog.String("error", err.Error()),
+					)
 					goto CONNECT
 				}
 

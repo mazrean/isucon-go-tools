@@ -6,9 +6,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
+	"runtime"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/grafana/pyroscope-go"
@@ -26,11 +28,7 @@ var (
 	query       string
 )
 
-func init() {
-	if !config.Enable {
-		return
-	}
-
+func setupPyroscope() error {
 	var ok bool
 	serverAddr, ok = os.LookupEnv("PYROSCOPE_SERVER")
 	if !ok {
@@ -52,7 +50,14 @@ func init() {
 		query = "{}"
 	}
 
+	err := pyroscopeStart()
+	if err != nil {
+		return fmt.Errorf("failed to start pyroscope: %w", err)
+	}
+
 	benchmark.SetEndHook(DownloadPGO)
+
+	return nil
 }
 
 func pyroscopeStart() error {
@@ -64,7 +69,7 @@ func pyroscopeStart() error {
 	_, err := pyroscope.Start(pyroscope.Config{
 		ApplicationName: "isucon.go.app",
 		ServerAddress:   serverAddr,
-		Logger:          pyroscope.StandardLogger,
+		Logger:          slogLogger{},
 		Tags:            tagMap,
 		ProfileTypes: []pyroscope.ProfileType{
 			pyroscope.ProfileCPU,
@@ -86,6 +91,29 @@ func pyroscopeStart() error {
 	return nil
 }
 
+type slogLogger struct{}
+
+func (slogLogger) Infof(format string, args ...any) {
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:])
+	r := slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf(format, args...), pcs[0])
+	slog.Default().Handler().Handle(context.Background(), r)
+}
+
+func (slogLogger) Debugf(format string, args ...any) {
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:])
+	r := slog.NewRecord(time.Now(), slog.LevelDebug, fmt.Sprintf(format, args...), pcs[0])
+	slog.Default().Handler().Handle(context.Background(), r)
+}
+
+func (slogLogger) Errorf(format string, args ...any) {
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:])
+	r := slog.NewRecord(time.Now(), slog.LevelError, fmt.Sprintf(format, args...), pcs[0])
+	slog.Default().Handler().Handle(context.Background(), r)
+}
+
 func DownloadPGO(ctx context.Context, b *benchmark.Benchmark) {
 	client := querierv1connect.NewQuerierServiceClient(
 		http.DefaultClient,
@@ -103,19 +131,31 @@ func DownloadPGO(ctx context.Context, b *benchmark.Benchmark) {
 		LabelSelector: query,
 	}))
 	if err != nil {
-		log.Printf("failed to select merge span profile: %v\n", err)
+		slog.Error("failed to select merge span profile",
+			slog.Group("benchmark",
+				slog.Time("start", b.Start),
+				slog.Time("end", b.End),
+				slog.Int64("score", b.Score),
+			),
+			slog.String("error", err.Error()),
+		)
 		return
 	}
 
 	buf, err := res.Msg.MarshalVT()
 	if err != nil {
-		log.Printf("failed to marshal vt: %v\n", err)
+		slog.Error("failed to marshal vt",
+			slog.String("error", err.Error()),
+		)
 		return
 	}
 
 	f, err := os.Create(pgoFile)
 	if err != nil {
-		log.Printf("failed to create pgo file(%s): %s\n", pgoFile, err)
+		slog.Error("failed to create pgo file",
+			slog.String("file", pgoFile),
+			slog.String("error", err.Error()),
+		)
 		return
 	}
 	defer f.Close()
@@ -124,6 +164,9 @@ func DownloadPGO(ctx context.Context, b *benchmark.Benchmark) {
 	defer gzipWriter.Close()
 
 	if _, err := io.Copy(gzipWriter, bytes.NewReader(buf)); err != nil {
-		log.Printf("failed to copy response: %v\n", err)
+		slog.Error("failed to copy buffer",
+			slog.String("error", err.Error()),
+		)
+		return
 	}
 }

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -18,7 +18,10 @@ func init() {
 	if ok {
 		enable, err := strconv.ParseBool(strings.TrimSpace(strEnable))
 		if err != nil {
-			log.Printf("failed to parse ISUTOOLS_ENABLE: %v", err)
+			slog.Error("failed to parse ISUTOOLS_ENABLE",
+				slog.String("ISUTOOLS_ENABLE", strEnable),
+				slog.String("error", err.Error()),
+			)
 			return
 		}
 

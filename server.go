@@ -1,13 +1,14 @@
 package isutools
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	_ "net/http/pprof"
 
 	"github.com/mazrean/isucon-go-tools/v2/internal/benchmark"
 	"github.com/mazrean/isucon-go-tools/v2/internal/config"
+	_ "github.com/mazrean/isucon-go-tools/v2/internal/log"
 	"github.com/mazrean/isucon-go-tools/v2/profiler"
 )
 
@@ -27,7 +28,10 @@ func init() {
 		}
 		err := server.ListenAndServe()
 		if err != nil {
-			log.Printf("failed to listen and serve(%s): %v", config.Addr, err)
+			slog.Error("failed to start http server",
+				slog.String("addr", config.Addr),
+				slog.String("error", err.Error()),
+			)
 		}
 	}()
 }

@@ -3,7 +3,7 @@ package isuhttp
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -28,7 +28,10 @@ func init() {
 
 	subEnableGoJson, err := strconv.ParseBool(strEnableGoJson)
 	if err != nil {
-		log.Printf("failed to parse GO_JSON: %s\n", err)
+		slog.Error("failed to parse GO_JSON",
+			slog.String("GO_JSON", strEnableGoJson),
+			slog.String("error", err.Error()),
+		)
 		return
 	}
 
@@ -44,7 +47,9 @@ func EchoSetting(e *echo.Echo) *echo.Echo {
 
 	listener, ok, err := newUnixDomainSockListener()
 	if err != nil {
-		log.Printf("failed to init unix domain socket: %s\n", err)
+		slog.Error("failed to create unix domain socket listener",
+			slog.String("error", err.Error()),
+		)
 	}
 
 	if ok {

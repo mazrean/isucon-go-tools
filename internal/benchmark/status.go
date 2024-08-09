@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -52,7 +52,10 @@ func init() {
 	f, err := os.Open(gobFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			log.Printf("failed to open gob file(%s): %s\n", gobFile, err)
+			slog.Error("failed to open gob file",
+				slog.String("file", gobFile),
+				slog.String("error", err.Error()),
+			)
 		}
 
 		return
@@ -61,7 +64,10 @@ func init() {
 
 	err = gob.NewDecoder(f).Decode(latest)
 	if err != nil {
-		log.Printf("failed to decode gob file(%s): %s\n", gobFile, err)
+		slog.Error("failed to decode gob file",
+			slog.String("file", gobFile),
+			slog.String("error", err.Error()),
+		)
 	}
 
 	scoreGauge.Set(float64(latest.Score))
@@ -99,19 +105,30 @@ func setScore(ctx context.Context, score int64) {
 	scoreGauge.Set(float64(score))
 	durationGauge.Set(latest.End.Sub(latest.Start).Seconds())
 
+	for _, f := range endHooks {
+		f(ctx, latest)
+	}
+
 	f, err := os.Create(gobFile)
 	if err != nil {
-		log.Printf("failed to create gob file(%s): %s\n", gobFile, err)
-		return
+		slog.Error("failed to create gob file",
+			slog.String("file", gobFile),
+			slog.String("error", err.Error()),
+		)
 	}
+	defer f.Close()
 
 	err = gob.NewEncoder(f).Encode(latest)
 	if err != nil {
-		log.Printf("failed to encode gob file(%s): %s\n", gobFile, err)
-	}
-
-	for _, f := range endHooks {
-		f(ctx, latest)
+		slog.Error("failed to encode gob file",
+			slog.String("file", gobFile),
+			slog.Group("latest",
+				slog.Time("start", latest.Start),
+				slog.Time("end", latest.End),
+				slog.Int64("score", latest.Score),
+			),
+			slog.String("error", err.Error()),
+		)
 	}
 }
 

@@ -3,7 +3,7 @@ package isuhttp
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -35,13 +35,17 @@ func FiberNew(conf ...fiber.Config) *fiber.App {
 
 	listener, ok, err := newUnixDomainSockListener()
 	if err != nil {
-		log.Printf("failed to init unix domain socket: %s\n", err)
+		slog.Error("failed to create unix domain socket listener",
+			slog.String("error", err.Error()),
+		)
 	}
 
 	if ok {
 		err := app.Listener(listener)
 		if err != nil {
-			log.Printf("failed to set listener: %s\n", err)
+			slog.Error("failed to set unix domain socket listener",
+				slog.String("error", err.Error()),
+			)
 		}
 	}
 

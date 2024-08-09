@@ -1,7 +1,7 @@
 package profiler
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"runtime"
@@ -21,7 +21,10 @@ func init() {
 	if ok {
 		blockRate, err := strconv.Atoi(strBlockRate)
 		if err != nil {
-			log.Printf("failed to parse BLOCK_RATE(%s): %v", strBlockRate, err)
+			slog.Error("failed to parse BLOCK_RATE",
+				slog.String("BLOCK_RATE", strBlockRate),
+				slog.String("error", err.Error()),
+			)
 		} else {
 			runtime.SetBlockProfileRate(blockRate)
 		}
@@ -31,15 +34,20 @@ func init() {
 	if ok {
 		mutexRate, err := strconv.Atoi(strMutexRate)
 		if err != nil {
-			log.Printf("failed to parse MUTEX_RATE(%s): %v", strMutexRate, err)
+			slog.Error("failed to parse MUTEX_RATE",
+				slog.String("MUTEX_RATE", strMutexRate),
+				slog.String("error", err.Error()),
+			)
 		} else {
 			runtime.SetMutexProfileFraction(mutexRate)
 		}
 	}
 
-	err := pyroscopeStart()
+	err := setupPyroscope()
 	if err != nil {
-		log.Printf("failed to init pyroscope: %v", err)
+		slog.Error("failed to setup pyroscope",
+			slog.String("error", err.Error()),
+		)
 	}
 }
 
