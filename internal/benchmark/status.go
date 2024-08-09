@@ -19,7 +19,7 @@ import (
 
 var (
 	gobFile    string
-	latest     *Benchmark
+	latest     = &Benchmark{}
 	scoreGauge = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "isutools",
 		Subsystem: "benchmark",
