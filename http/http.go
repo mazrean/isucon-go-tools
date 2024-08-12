@@ -2,7 +2,6 @@ package isuhttp
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"net"
@@ -157,6 +156,10 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 			return rw
 		})
 
+		start := time.Now()
+		next.ServeHTTP(wrappedRes, req)
+		reqDur := float64(time.Since(start)) / float64(time.Second)
+
 		path := getPath(req)
 		host := req.Host
 		method := req.Method
@@ -178,10 +181,6 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 		flowCookie.Expires = time.Now().Add(1 * time.Hour)
 		http.SetCookie(res, flowCookie)
 
-		start := time.Now()
-		next.ServeHTTP(wrappedRes, req)
-		reqDur := float64(time.Since(start)) / float64(time.Second)
-
 		statusCode := strconv.Itoa(metrics.statusCode)
 
 		reqSizeHistogramVec.WithLabelValues(statusCode, method, path).Observe(reqSz)
@@ -191,24 +190,20 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type pathCtxKey struct{}
+const pathHeader = "X-Isu-Tools-Path-12e9e167-75f7-45e8-b0c7-5e76fd2f8a09"
 
-func SetPath(req *http.Request, path string) *http.Request {
-	return req.WithContext(context.WithValue(req.Context(), pathCtxKey{}, path))
+func SetPath(req *http.Request, path string) {
+	// ヘッダー経由でパスを渡す
+	req.Header.Set(pathHeader, path)
 }
 
 func getPath(req *http.Request) string {
-	iPath := req.Context().Value(pathCtxKey{})
-	if iPath == nil {
-		return FilterFunc(req.URL.Path)
+	path := req.Header.Get(pathHeader)
+	if path != "" {
+		return path
 	}
 
-	path, ok := iPath.(string)
-	if !ok {
-		return FilterFunc(req.URL.Path)
-	}
-
-	return path
+	return FilterFunc(req.URL.Path)
 }
 
 func ServerMuxHandle(mux *http.ServeMux, pattern string, handler http.Handler) {
@@ -219,7 +214,7 @@ func ServerMuxHandle(mux *http.ServeMux, pattern string, handler http.Handler) {
 
 	pathPattern := pathPattern(pattern)
 	mux.Handle(pattern, http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		req = SetPath(req, pathPattern)
+		SetPath(req, pathPattern)
 		StdMetricsMiddleware(handler).ServeHTTP(res, req)
 	}))
 }
@@ -232,7 +227,7 @@ func ServerMuxHandleFunc(mux *http.ServeMux, pattern string, handler func(http.R
 
 	pathPattern := pathPattern(pattern)
 	mux.HandleFunc(pattern, func(res http.ResponseWriter, req *http.Request) {
-		req = SetPath(req, pathPattern)
+		SetPath(req, pathPattern)
 
 		StdMetricsMiddleware(http.HandlerFunc(handler)).ServeHTTP(res, req)
 	})
