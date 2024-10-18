@@ -8,7 +8,7 @@ require (
 	github.com/grafana/pyroscope v1.7.1
 	github.com/grafana/pyroscope-go v1.1.2
 	github.com/grafana/pyroscope/api v0.4.0
-	github.com/prometheus/client_golang v1.20.1
+	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.9.0
 	github.com/valyala/fasthttp v1.55.0
 	golang.org/x/tools v0.24.0
