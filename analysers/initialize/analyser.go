@@ -1,4 +1,4 @@
-package cache
+package initialize
 
 import (
 	"bytes"
@@ -14,17 +14,18 @@ import (
 )
 
 const (
-	cachePkgName         = "github.com/mazrean/isucon-go-tools/v2/cache"
-	cachePkgDefaultIdent = "isucache"
-	cachePurgeFuncName   = "AllPurge"
-	initializeKeyword    = "initialize"
+	isutoolsPkgName          = "github.com/mazrean/isucon-go-tools/v2"
+	isutoolsPkgDefaultIdent  = "isutools"
+	initializeBeforeFuncName = "BeforeInitialize"
+	initializeAfterFuncName  = "AfterInitialize"
+	initializeKeyword        = "initialize"
 )
 
 var (
 	importPkgs []*suggest.ImportInfo
 	Analyzer   = &analysis.Analyzer{
-		Name:       "cache",
-		Doc:        "automatically setup cache purge",
+		Name:       "initialize",
+		Doc:        "automatically setup initialize tasks",
 		Run:        run,
 		ResultType: reflect.TypeOf(importPkgs),
 	}
@@ -39,7 +40,7 @@ func run(pass *analysis.Pass) (any, error) {
 	for _, f := range pass.Files {
 		for _, decl := range f.Decls {
 			funcDecl, ok := decl.(*ast.FuncDecl)
-			if !ok || funcDecl == nil {
+			if !ok || funcDecl == nil || funcDecl.Body == nil {
 				continue
 			}
 
@@ -60,19 +61,20 @@ func run(pass *analysis.Pass) (any, error) {
 		return importPkgs, nil
 	}
 
-	if initializeFuncDecl.Body != nil {
-		purgeCalled := false
-		ast.Inspect(initializeFuncDecl.Body, func(n ast.Node) bool {
-			if purgeCalled {
-				return false
-			}
+	beforeCalled := false
+	afterCalled := false
+	ast.Inspect(initializeFuncDecl.Body, func(n ast.Node) bool {
+		if beforeCalled && afterCalled {
+			return false
+		}
 
-			callExpr, ok := n.(*ast.CallExpr)
-			if !ok || callExpr == nil {
+		switch n := n.(type) {
+		case *ast.CallExpr:
+			if n == nil || n.Fun == nil {
 				return true
 			}
 
-			selectorExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+			selectorExpr, ok := n.Fun.(*ast.SelectorExpr)
 			if !ok || selectorExpr == nil {
 				return true
 			}
@@ -82,23 +84,42 @@ func run(pass *analysis.Pass) (any, error) {
 				return true
 			}
 
-			if pkgIdent.Name == cachePkgDefaultIdent && selectorExpr.Sel.Name == cachePurgeFuncName {
-				purgeCalled = true
+			if pkgIdent.Name == isutoolsPkgDefaultIdent && selectorExpr.Sel.Name == initializeBeforeFuncName {
+				beforeCalled = true
 				return false
 			}
+		case *ast.DeferStmt:
+			if n == nil || n.Call == nil || n.Call.Fun == nil {
+				return true
+			}
 
-			return true
-		})
+			selectorExpr, ok := n.Call.Fun.(*ast.SelectorExpr)
+			if !ok || selectorExpr == nil {
+				return true
+			}
 
-		if purgeCalled {
-			return importPkgs, nil
+			pkgIdent, ok := selectorExpr.X.(*ast.Ident)
+			if !ok || pkgIdent == nil {
+				return true
+			}
+
+			if pkgIdent.Name == isutoolsPkgDefaultIdent && selectorExpr.Sel.Name == initializeAfterFuncName {
+				afterCalled = true
+				return false
+			}
 		}
+
+		return true
+	})
+
+	if beforeCalled && afterCalled {
+		return importPkgs, nil
 	}
 
 	importPkgs = append(importPkgs, &suggest.ImportInfo{
 		File:  initializeFuncFile,
-		Ident: cachePkgDefaultIdent,
-		Path:  cachePkgName,
+		Ident: isutoolsPkgDefaultIdent,
+		Path:  isutoolsPkgName,
 	})
 
 	buf := bytes.Buffer{}
@@ -107,13 +128,21 @@ func run(pass *analysis.Pass) (any, error) {
 	if initializeFuncDecl.Body == nil {
 		list = make([]ast.Stmt, 0, 1)
 	} else {
-		list = make([]ast.Stmt, 0, len(initializeFuncDecl.Body.List)+1)
+		list = make([]ast.Stmt, 0, len(initializeFuncDecl.Body.List)+2)
 	}
 	list = append(list, &ast.ExprStmt{
 		X: &ast.CallExpr{
 			Fun: &ast.SelectorExpr{
-				X:   ast.NewIdent(cachePkgDefaultIdent),
-				Sel: ast.NewIdent(cachePurgeFuncName),
+				X:   ast.NewIdent(isutoolsPkgDefaultIdent),
+				Sel: ast.NewIdent(initializeBeforeFuncName),
+			},
+			Args: []ast.Expr{},
+		},
+	}, &ast.DeferStmt{
+		Call: &ast.CallExpr{
+			Fun: &ast.SelectorExpr{
+				X:   ast.NewIdent(isutoolsPkgDefaultIdent),
+				Sel: ast.NewIdent(initializeAfterFuncName),
 			},
 			Args: []ast.Expr{},
 		},
@@ -141,9 +170,9 @@ func run(pass *analysis.Pass) (any, error) {
 
 	pass.Report(analysis.Diagnostic{
 		Pos:     initializeFuncDecl.Pos(),
-		Message: fmt.Sprintf("%s should call (%s).%s", initializeFuncName, cachePkgName, cachePurgeFuncName),
+		Message: fmt.Sprintf("%s should call (%s).%s and (%s).%s", initializeFuncName, isutoolsPkgName, initializeBeforeFuncName, isutoolsPkgName, initializeAfterFuncName),
 		SuggestedFixes: []analysis.SuggestedFix{{
-			Message: fmt.Sprintf("add (%s).%s call in %s", cachePkgName, cachePurgeFuncName, initializeFuncName),
+			Message: fmt.Sprintf("add (%s).%s and (%s).%s call in %s", isutoolsPkgName, initializeBeforeFuncName, isutoolsPkgName, initializeAfterFuncName, initializeFuncName),
 			TextEdits: []analysis.TextEdit{{
 				Pos:     pos,
 				End:     end,

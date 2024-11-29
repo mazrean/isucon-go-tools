@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/gostaticanalysis/analysisutil"
-	"github.com/mazrean/isucon-go-tools/v2/analysers/cache"
 	"github.com/mazrean/isucon-go-tools/v2/analysers/db"
 	"github.com/mazrean/isucon-go-tools/v2/analysers/echo"
 	"github.com/mazrean/isucon-go-tools/v2/analysers/embed"
@@ -18,6 +17,7 @@ import (
 	"github.com/mazrean/isucon-go-tools/v2/analysers/fiber"
 	"github.com/mazrean/isucon-go-tools/v2/analysers/gin"
 	"github.com/mazrean/isucon-go-tools/v2/analysers/http"
+	"github.com/mazrean/isucon-go-tools/v2/analysers/initialize"
 	"github.com/mazrean/isucon-go-tools/v2/pkg/suggest"
 	"golang.org/x/tools/go/analysis"
 )
@@ -31,7 +31,7 @@ var (
 		fiber.Analyzer,
 		fasthttp.Analyzer,
 		db.Analyzer,
-		cache.Analyzer,
+		initialize.Analyzer,
 	}
 )
 

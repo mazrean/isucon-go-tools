@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"strconv"
@@ -142,6 +143,19 @@ func StdMetricsMiddleware(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		defer func() {
+			err := recover()
+			if err != nil {
+				slog.Error("panic",
+					slog.String("path", getPath(req)),
+					slog.String("host", req.Host),
+					slog.String("method", req.Method),
+					slog.String("error", fmt.Sprintf("%+v", err)),
+				)
+				http.Error(res, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
+
 		if !config.Enable {
 			next.ServeHTTP(res, req)
 			return
