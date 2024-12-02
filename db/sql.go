@@ -19,7 +19,7 @@ func init() {
 	connectionID.Store(0)
 }
 
-func DBMetricsSetup[T interface {
+type DB = interface {
 	Ping() error
 	Close() error
 	Query(query string, args ...any) (*sql.Rows, error)
@@ -28,7 +28,11 @@ func DBMetricsSetup[T interface {
 	SetMaxIdleConns(n int)
 	SetMaxOpenConns(n int)
 	Stats() sql.DBStats
-}](fn func(string, string) (T, error)) func(string, string) (T, error) {
+}
+
+var dbMap = map[string]DB{}
+
+func DBMetricsSetup[T DB](fn func(string, string) (T, error)) func(string, string) (T, error) {
 	return func(driverName string, dataSourceName string) (T, error) {
 		openDriverName := driverName
 		var addr string
@@ -222,6 +226,8 @@ func DBMetricsSetup[T interface {
 			}, func() float64 {
 				return float64(db.Stats().MaxIdleTimeClosed)
 			})
+
+			dbMap[driverName] = db
 		}
 
 		return db, err

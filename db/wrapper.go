@@ -199,11 +199,12 @@ type segmentBuilder interface {
 }
 
 func (m *measureSegment) setQueryResult(query string, queryDur float64) {
-	query = m.normalizeQuery(query)
+	normalizedQuery := m.normalizeQuery(query)
 
 	if enableQueryTrace {
-		queryCountVec.WithLabelValues(m.driver, m.addr, query).Inc()
-		queryDurHistogramVec.WithLabelValues(m.driver, m.addr, query).Observe(queryDur)
+		queryCountVec.WithLabelValues(m.driver, m.addr, normalizedQuery).Inc()
+		queryDurHistogramVec.WithLabelValues(m.driver, m.addr, normalizedQuery).Observe(queryDur)
+		queryExecHook(m.driver, normalizedQuery, query, queryDur)
 	}
 }
 

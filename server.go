@@ -6,6 +6,7 @@ import (
 
 	_ "net/http/pprof"
 
+	isudb "github.com/mazrean/isucon-go-tools/v2/db"
 	"github.com/mazrean/isucon-go-tools/v2/internal/benchmark"
 	"github.com/mazrean/isucon-go-tools/v2/internal/config"
 	_ "github.com/mazrean/isucon-go-tools/v2/internal/log"
@@ -20,6 +21,7 @@ func init() {
 	mux := http.NewServeMux()
 	profiler.Register(mux)
 	benchmark.Register(mux)
+	isudb.Register(mux)
 
 	go func() {
 		server := http.Server{
