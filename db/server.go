@@ -152,7 +152,7 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 		explainQuery := "EXPLAIN " + query.Example.query
 
 		args := constructArgs(query.Example.args, query.Example.namedArgs)
-		log.Printf("query: %s, args: %v", explainQuery, args)
+		log.Printf("query: %s, queryArgs: %v, args: %v, namedArgs: %v", explainQuery, args, query.Example.args, query.Example.namedArgs)
 		rows, err := db.Query(explainQuery, args...)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
