@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -151,6 +152,7 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 		explainQuery := "EXPLAIN " + query.Example.query
 
 		args := constructArgs(query.Example.args, query.Example.namedArgs)
+		log.Printf("query: %s, args: %v", explainQuery, args)
 		rows, err := db.Query(explainQuery, args...)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
