@@ -281,6 +281,7 @@ func tableListHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			defer rows.Close()
 
 			var createTable string
 			if rows.Next() {
