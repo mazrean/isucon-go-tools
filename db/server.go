@@ -1,10 +1,10 @@
 package isudb
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -111,9 +111,9 @@ func queryListHandler(w http.ResponseWriter, r *http.Request) {
 type ExplainResult struct {
 	Table        string   `json:"table"`
 	PossibleKeys []string `json:"possible_keys"`
-	Key          string   `json:"key"`
+	Key          string   `json:"key,omitempty"`
 	Rows         int      `json:"rows"`
-	Filtered     int      `json:"filtered"`
+	Filtered     float64  `json:"filtered"`
 }
 
 func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +152,6 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 		explainQuery := "EXPLAIN " + query.Example.query
 
 		args := constructArgs(query.Example.args, query.Example.namedArgs)
-		log.Printf("query: %s, queryArgs: %v, args: %v, namedArgs: %v", explainQuery, args, query.Example.args, query.Example.namedArgs)
 		rows, err := db.Query(explainQuery, args...)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -161,18 +160,18 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 		defer rows.Close()
 
 		type explainRow struct {
-			ID           int    `json:"id"`
-			SelectType   string `json:"select_type"`
-			Table        string `json:"table"`
-			Partitions   string `json:"partitions"`
-			Type         string `json:"type"`
-			PossibleKeys string `json:"possible_keys"`
-			Key          string `json:"key"`
-			KeyLen       int    `json:"key_len"`
-			Ref          string `json:"ref"`
-			Rows         int    `json:"rows"`
-			Filtered     int    `json:"filtered"`
-			Extra        string `json:"Extra"`
+			ID           sql.NullInt64  `json:"id"`
+			SelectType   string         `json:"select_type"`
+			Table        string         `json:"table"`
+			Partitions   sql.NullString `json:"partitions"`
+			Type         string         `json:"type"`
+			PossibleKeys sql.NullString `json:"possible_keys"`
+			Key          sql.NullString `json:"key"`
+			KeyLen       sql.NullInt64  `json:"key_len"`
+			Ref          sql.NullString `json:"ref"`
+			Rows         int            `json:"rows"`
+			Filtered     float64        `json:"filtered"`
+			Extra        sql.NullString `json:"Extra"`
 		}
 
 		for rows.Next() {
@@ -183,8 +182,8 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			explainResults = append(explainResults, ExplainResult{
 				Table:        row.Table,
-				PossibleKeys: strings.Split(row.PossibleKeys, ","),
-				Key:          row.Key,
+				PossibleKeys: strings.Split(row.PossibleKeys.String, ","),
+				Key:          row.Key.String,
 				Rows:         row.Rows,
 				Filtered:     row.Filtered,
 			})
