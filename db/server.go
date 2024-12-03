@@ -80,7 +80,7 @@ func queryExecHook(driver, normalizedQuery, rawQuery string, args []driver.Value
 	// 同時に複数のクエリが実行される場合、latency最大のクエリとならないが、それなりに遅いクエリがとれれば良いため速度を優先
 	func() {
 		if info.Latency < latency {
-			info.Example = queryExample{query: rawQuery, args: args}
+			info.Example = queryExample{query: rawQuery, args: args, namedArgs: namedArgs}
 			info.Latency = latency
 
 			queryMapLocker.Lock()
