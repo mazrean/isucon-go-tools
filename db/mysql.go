@@ -36,8 +36,8 @@ var (
 		re *regexp.Regexp
 		to string
 	}{{
-		re: regexp.MustCompile(`(\?\s*,\s*)+`),
-		to: "..., ",
+		re: regexp.MustCompile(`(\?\s*,\s*)+\?`),
+		to: "..., ?",
 	}, {
 		re: regexp.MustCompile(`(\(\.\.\., \?\)\s*,\s*)+`),
 		to: "..., ",
