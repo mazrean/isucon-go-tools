@@ -77,13 +77,13 @@ func (wc *wrappedConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driv
 }
 
 func (wc *wrappedConn) Exec(query string, args []driver.Value) (driver.Result, error) {
-	return measureQuery(wc.segment, query, func() (driver.Result, error) {
+	return measureQuery(wc.segment, query, args, nil, func() (driver.Result, error) {
 		return wc.Conn.(driver.Execer).Exec(query, args)
 	})
 }
 
 func (wc *wrappedConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	return measureQuery(wc.segment, query, func() (driver.Result, error) {
+	return measureQuery(wc.segment, query, nil, args, func() (driver.Result, error) {
 		return wc.Conn.(driver.ExecerContext).ExecContext(ctx, query, args)
 	})
 }
@@ -97,13 +97,13 @@ func (wc *wrappedConn) Ping(ctx context.Context) error {
 }
 
 func (wc *wrappedConn) Query(query string, args []driver.Value) (driver.Rows, error) {
-	return measureQuery(wc.segment, query, func() (driver.Rows, error) {
+	return measureQuery(wc.segment, query, args, nil, func() (driver.Rows, error) {
 		return wc.Conn.(driver.Queryer).Query(query, args)
 	})
 }
 
 func (wc *wrappedConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	return measureQuery(wc.segment, query, func() (driver.Rows, error) {
+	return measureQuery(wc.segment, query, nil, args, func() (driver.Rows, error) {
 		return wc.Conn.(driver.QueryerContext).QueryContext(ctx, query, args)
 	})
 }
@@ -164,25 +164,25 @@ func (ws *wrappedStmt) CheckNamedValue(v *driver.NamedValue) error {
 }
 
 func (ws *wrappedStmt) Exec(args []driver.Value) (driver.Result, error) {
-	return measureQuery(ws.segment, ws.query, func() (driver.Result, error) {
+	return measureQuery(ws.segment, ws.query, args, nil, func() (driver.Result, error) {
 		return ws.Stmt.Exec(args)
 	})
 }
 
 func (ws *wrappedStmt) Query(args []driver.Value) (driver.Rows, error) {
-	return measureQuery(ws.segment, ws.query, func() (driver.Rows, error) {
+	return measureQuery(ws.segment, ws.query, args, nil, func() (driver.Rows, error) {
 		return ws.Stmt.Query(args)
 	})
 }
 
 func (ws *wrappedStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
-	return measureQuery(ws.segment, ws.query, func() (driver.Result, error) {
+	return measureQuery(ws.segment, ws.query, nil, args, func() (driver.Result, error) {
 		return ws.Stmt.(driver.StmtExecContext).ExecContext(ctx, args)
 	})
 }
 
 func (ws *wrappedStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
-	return measureQuery(ws.segment, ws.query, func() (driver.Rows, error) {
+	return measureQuery(ws.segment, ws.query, nil, args, func() (driver.Rows, error) {
 		return ws.Stmt.(driver.StmtQueryContext).QueryContext(ctx, args)
 	})
 }
@@ -198,24 +198,24 @@ type segmentBuilder interface {
 	parseDSN(dsn string) *measureSegment
 }
 
-func (m *measureSegment) setQueryResult(query string, queryDur float64) {
+func (m *measureSegment) setQueryResult(query string, args []driver.Value, namedArgs []driver.NamedValue, queryDur float64) {
 	normalizedQuery := m.normalizeQuery(query)
 
 	if enableQueryTrace {
 		queryCountVec.WithLabelValues(m.driver, m.addr, normalizedQuery).Inc()
 		queryDurHistogramVec.WithLabelValues(m.driver, m.addr, normalizedQuery).Observe(queryDur)
-		queryExecHook(m.driver, normalizedQuery, query, queryDur)
+		queryExecHook(m.driver, normalizedQuery, query, args, namedArgs, queryDur)
 	}
 }
 
-func measureQuery[T any](segment *measureSegment, query string, f func() (T, error)) (T, error) {
+func measureQuery[T any](segment *measureSegment, query string, args []driver.Value, namedArgs []driver.NamedValue, f func() (T, error)) (T, error) {
 	query = segment.normalizeQuery(query)
 
 	start := time.Now()
 	result, err := f()
 	queryDur := float64(time.Since(start)) / float64(time.Second)
 
-	segment.setQueryResult(query, queryDur)
+	segment.setQueryResult(query, args, namedArgs, queryDur)
 
 	return result, err
 }

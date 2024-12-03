@@ -1,6 +1,7 @@
 package isudb
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,12 +16,18 @@ type queryKey struct {
 	normalized string
 }
 
+type queryExample struct {
+	query     string
+	args      []driver.Value
+	namedArgs []driver.NamedValue
+}
+
 type queryInfo struct {
-	ID         int     `json:"id"`
-	Driver     string  `json:"driver"`
-	Normalized string  `json:"normalized"`
-	Example    string  `json:"example"`
-	Latency    float64 `json:"latency"`
+	ID         int          `json:"id"`
+	Driver     string       `json:"driver"`
+	Normalized string       `json:"normalized"`
+	Example    queryExample `json:"-"`
+	Latency    float64      `json:"latency"`
 }
 
 var (
@@ -33,7 +40,7 @@ func init() {
 	queryID.Store(0)
 }
 
-func queryExecHook(driver, normalizedQuery, rawQuery string, latency float64) {
+func queryExecHook(driver, normalizedQuery, rawQuery string, args []driver.Value, namedArgs []driver.NamedValue, latency float64) {
 	key := queryKey{
 		driver:     driver,
 		normalized: normalizedQuery,
@@ -58,8 +65,12 @@ func queryExecHook(driver, normalizedQuery, rawQuery string, latency float64) {
 				ID:         id,
 				Driver:     driver,
 				Normalized: normalizedQuery,
-				Example:    rawQuery,
-				Latency:    latency,
+				Example: queryExample{
+					query:     rawQuery,
+					args:      args,
+					namedArgs: namedArgs,
+				},
+				Latency: latency,
 			}
 		}()
 		return
@@ -68,7 +79,7 @@ func queryExecHook(driver, normalizedQuery, rawQuery string, latency float64) {
 	// 同時に複数のクエリが実行される場合、latency最大のクエリとならないが、それなりに遅いクエリがとれれば良いため速度を優先
 	func() {
 		if info.Latency < latency {
-			info.Example = rawQuery
+			info.Example = queryExample{query: rawQuery, args: args}
 			info.Latency = latency
 
 			queryMapLocker.Lock()
@@ -137,9 +148,10 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 	var explainResults []ExplainResult
 	switch query.Driver {
 	case "mysql":
-		explainQuery := "EXPLAIN " + query.Example
+		explainQuery := "EXPLAIN " + query.Example.query
 
-		rows, err := db.Query(explainQuery)
+		args := constructArgs(query.Example.args, query.Example.namedArgs)
+		rows, err := db.Query(explainQuery, args...)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -180,6 +192,53 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(explainResults)
+}
+
+func constructArgs(args []driver.Value, namedArgs []driver.NamedValue) []any {
+	if args != nil {
+		newArgs := make([]any, 0, len(args))
+		for _, arg := range args {
+			newArgs = append(newArgs, arg)
+		}
+
+		return newArgs
+	}
+
+	if namedArgs != nil {
+		maxOrdinal := 0
+		namedCount := 0
+		othersCount := 0
+		for _, namedArg := range namedArgs {
+			switch {
+			case namedArg.Name != "":
+				namedCount++
+			case namedArg.Ordinal > maxOrdinal:
+				maxOrdinal = namedArg.Ordinal
+			default:
+				othersCount++
+			}
+		}
+
+		newArgs := make([]any, maxOrdinal+namedCount+othersCount)
+		namedIdx := maxOrdinal
+		othersIdx := maxOrdinal + namedCount
+		for _, namedArg := range namedArgs {
+			switch {
+			case namedArg.Name != "":
+				newArgs[namedIdx] = namedArg.Value
+				namedIdx++
+			case namedArg.Ordinal > 0:
+				newArgs[namedArg.Ordinal-1] = namedArg.Value
+			default:
+				newArgs[othersIdx] = namedArg.Value
+				othersIdx++
+			}
+		}
+
+		return newArgs
+	}
+
+	return nil
 }
 
 func tableListHandler(w http.ResponseWriter, r *http.Request) {
