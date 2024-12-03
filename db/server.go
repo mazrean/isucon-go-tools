@@ -160,18 +160,18 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 		defer rows.Close()
 
 		type explainRow struct {
-			ID           sql.NullInt64  `json:"id"`
-			SelectType   string         `json:"select_type"`
-			Table        string         `json:"table"`
-			Partitions   sql.NullString `json:"partitions"`
-			Type         string         `json:"type"`
-			PossibleKeys sql.NullString `json:"possible_keys"`
-			Key          sql.NullString `json:"key"`
-			KeyLen       sql.NullInt64  `json:"key_len"`
-			Ref          sql.NullString `json:"ref"`
-			Rows         int            `json:"rows"`
-			Filtered     float64        `json:"filtered"`
-			Extra        sql.NullString `json:"Extra"`
+			ID           sql.NullInt64   `json:"id"`
+			SelectType   sql.NullString  `json:"select_type"`
+			Table        sql.NullString  `json:"table"`
+			Partitions   sql.NullString  `json:"partitions"`
+			Type         sql.NullString  `json:"type"`
+			PossibleKeys sql.NullString  `json:"possible_keys"`
+			Key          sql.NullString  `json:"key"`
+			KeyLen       sql.NullInt64   `json:"key_len"`
+			Ref          sql.NullString  `json:"ref"`
+			Rows         sql.NullInt64   `json:"rows"`
+			Filtered     sql.NullFloat64 `json:"filtered"`
+			Extra        sql.NullString  `json:"Extra"`
 		}
 
 		for rows.Next() {
@@ -181,11 +181,11 @@ func queryExplainHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			explainResults = append(explainResults, ExplainResult{
-				Table:        row.Table,
+				Table:        row.Table.String,
 				PossibleKeys: strings.Split(row.PossibleKeys.String, ","),
 				Key:          row.Key.String,
-				Rows:         row.Rows,
-				Filtered:     row.Filtered,
+				Rows:         int(row.Rows.Int64),
+				Filtered:     row.Filtered.Float64,
 			})
 		}
 	}
