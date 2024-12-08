@@ -409,14 +409,7 @@ func (m *AtomicMap[K, V, T]) Len() int {
 func (m *AtomicMap[K, V, T]) Update(key K, f func(V) (V, bool)) {
 	m.locker.Lock()
 	defer m.locker.Unlock()
-	av, ok := func() (*atomic.Pointer[T], bool) {
-		m.locker.RLock()
-		defer m.locker.RUnlock()
-
-		v, ok := m.m[key]
-
-		return v, ok
-	}()
+	av, ok := m.m[key]
 	if !ok {
 		return
 	}
