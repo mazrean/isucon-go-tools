@@ -411,7 +411,8 @@ func (m *AtomicMap[K, V, T]) Update(key K, f func(V) (V, bool)) {
 	defer m.locker.Unlock()
 	av, ok := m.m[key]
 	if !ok {
-		return
+		av = &atomic.Pointer[T]{}
+		m.m[key] = av
 	}
 
 	v, ok := f(av.Load())
