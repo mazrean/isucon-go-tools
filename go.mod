@@ -7,7 +7,7 @@ require (
 	github.com/gostaticanalysis/analysisutil v0.7.1
 	github.com/grafana/pyroscope v1.11.0
 	github.com/grafana/pyroscope-go v1.2.0
-	github.com/grafana/pyroscope/api v1.1.0
+	github.com/grafana/pyroscope/api v1.2.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.10.0
 	github.com/valyala/fasthttp v1.57.0
