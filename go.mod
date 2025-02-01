@@ -5,7 +5,7 @@ go 1.22.6
 require (
 	connectrpc.com/connect v1.18.1
 	github.com/gostaticanalysis/analysisutil v0.7.1
-	github.com/grafana/pyroscope v1.11.0
+	github.com/grafana/pyroscope v1.12.0
 	github.com/grafana/pyroscope-go v1.2.0
 	github.com/grafana/pyroscope/api v1.1.0
 	github.com/prometheus/client_golang v1.20.5
