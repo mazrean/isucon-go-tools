@@ -75,8 +75,8 @@ github.com/grafana/pyroscope-go v1.2.0 h1:aILLKjTj8CS8f/24OPMGPewQSYlhmdQMBmol1d
 github.com/grafana/pyroscope-go v1.2.0/go.mod h1:2GHr28Nr05bg2pElS+dDsc98f3JTUh2f6Fz1hWXrqwk=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKtUuKQbJqgAIjlnicKg=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
-github.com/grafana/pyroscope/api v1.1.0 h1:E51qARM79enIOEZGm9VUAFYqK1k24UIwRe2Qwgp8hDE=
-github.com/grafana/pyroscope/api v1.1.0/go.mod h1:CCWrMnwvTB5O+VBZfT+jO2RAvgm0GxdG2//kAWuMDhA=
+github.com/grafana/pyroscope/api v1.2.0 h1:SfHDZcEZ4Vbj/Jj3bTOSpm4IDB33wLA2xBYxROhiL4U=
+github.com/grafana/pyroscope/api v1.2.0/go.mod h1:CCWrMnwvTB5O+VBZfT+jO2RAvgm0GxdG2//kAWuMDhA=
 github.com/hashicorp/go-version v1.2.1/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
 github.com/hashicorp/go-version v1.6.0 h1:feTTfFNnjP967rlCxM/I9g701jU+RN74YKx2mOkIeek=
 github.com/hashicorp/go-version v1.6.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
