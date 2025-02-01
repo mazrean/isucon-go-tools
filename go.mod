@@ -10,7 +10,7 @@ require (
 	github.com/grafana/pyroscope/api v1.1.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.10.0
-	github.com/valyala/fasthttp v1.57.0
+	github.com/valyala/fasthttp v1.58.0
 	golang.org/x/tools v0.29.0
 )
 
