@@ -652,9 +652,7 @@ func (s *Slice[T]) WriteToGob(w io.Writer) error {
 		defer s.locker.RUnlock()
 
 		gobSlice := make([]T, 0, len(s.s))
-		for _, v := range s.s {
-			gobSlice = append(gobSlice, v)
-		}
+		gobSlice = append(gobSlice, s.s...)
 
 		return gobSlice
 	}()
@@ -831,10 +829,6 @@ func (s *NoDeleteSlice[T]) reserveLen(l int64) int64 {
 
 func (s *NoDeleteSlice[T]) addLen(l int64) int64 {
 	return atomic.AddInt64(&(*sliceHeader)(unsafe.Pointer(&s.s)).len, l)
-}
-
-func (s *NoDeleteSlice[T]) subLen(l int64) int64 {
-	return atomic.AddInt64(&(*sliceHeader)(unsafe.Pointer(&s.s)).len, -l)
 }
 
 func (s *NoDeleteSlice[T]) Cap() int {

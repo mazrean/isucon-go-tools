@@ -162,6 +162,9 @@ func Register(mux *http.ServeMux) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(latest)
+		err := json.NewEncoder(w).Encode(latest)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to encode latest benchmark: %s", err), http.StatusInternalServerError)
+		}
 	})
 }
