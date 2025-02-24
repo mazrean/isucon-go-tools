@@ -11,6 +11,7 @@ import (
 type ResponseWriter interface {
 	//iwrapper:require
 	http.ResponseWriter
+	//nolint:staticcheck
 	http.CloseNotifier
 	http.Flusher
 	http.Hijacker

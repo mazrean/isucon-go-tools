@@ -121,6 +121,7 @@ func (r *responseWriterWithMetrics) Write(b []byte) (int, error) {
 }
 
 func (r *responseWriterWithMetrics) CloseNotify() <-chan bool {
+	//nolint:staticcheck
 	return r.ResponseWriter.(http.CloseNotifier).CloseNotify()
 }
 

@@ -12,7 +12,7 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-var treeHeightMetrics = promauto.NewGaugeVec(
+var _ = promauto.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Namespace: prometheusNamespace,
 		Subsystem: prometheusSubsystem,
@@ -28,8 +28,6 @@ type BPTree[K any, V any] struct {
 	order      int
 	locker     sync.RWMutex
 	root       *atomic.Pointer[node[K, V]]
-	left       *atomic.Pointer[node[K, V]]
-	right      *atomic.Pointer[node[K, V]]
 	size       *atomic.Int64
 }
 

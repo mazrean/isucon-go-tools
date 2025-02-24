@@ -103,7 +103,13 @@ func (slogLogger) Infof(format string, args ...any) {
 	var pcs [1]uintptr
 	runtime.Callers(2, pcs[:])
 	r := slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf(format, args...), pcs[0])
-	slog.Default().Handler().Handle(ctx, r)
+	err := slog.Default().Handler().Handle(ctx, r)
+	if err != nil {
+		slog.Error("failed to handle log",
+			slog.String("error", err.Error()),
+		)
+		return
+	}
 }
 
 func (slogLogger) Debugf(format string, args ...any) {
@@ -116,7 +122,13 @@ func (slogLogger) Debugf(format string, args ...any) {
 	var pcs [1]uintptr
 	runtime.Callers(2, pcs[:])
 	r := slog.NewRecord(time.Now(), slog.LevelDebug, fmt.Sprintf(format, args...), pcs[0])
-	slog.Default().Handler().Handle(ctx, r)
+	err := slog.Default().Handler().Handle(ctx, r)
+	if err != nil {
+		slog.Error("failed to handle log",
+			slog.String("error", err.Error()),
+		)
+		return
+	}
 }
 
 func (slogLogger) Errorf(format string, args ...any) {
@@ -129,7 +141,13 @@ func (slogLogger) Errorf(format string, args ...any) {
 	var pcs [1]uintptr
 	runtime.Callers(2, pcs[:])
 	r := slog.NewRecord(time.Now(), slog.LevelError, fmt.Sprintf(format, args...), pcs[0])
-	slog.Default().Handler().Handle(ctx, r)
+	err := slog.Default().Handler().Handle(ctx, r)
+	if err != nil {
+		slog.Error("failed to handle log",
+			slog.String("error", err.Error()),
+		)
+		return
+	}
 }
 
 func DownloadPGO(ctx context.Context, b *benchmark.Benchmark) {

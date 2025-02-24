@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - 'main'
+      - "main"
   pull_request:
 
 jobs:
@@ -52,9 +52,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v2.4
+        uses: reviewdog/action-golangci-lint@v2.7
         with:
-          go-version-file: go.mod
+          go_version_file: go.mod
           reporter: github-pr-check
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
+          fail_level: error
+          golangci_lint_flags: --timeout 5m

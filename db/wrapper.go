@@ -78,6 +78,7 @@ func (wc *wrappedConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driv
 
 func (wc *wrappedConn) Exec(query string, args []driver.Value) (driver.Result, error) {
 	return measureQuery(wc.segment, query, args, nil, func() (driver.Result, error) {
+		//nolint:staticcheck
 		return wc.Conn.(driver.Execer).Exec(query, args)
 	})
 }
@@ -98,6 +99,7 @@ func (wc *wrappedConn) Ping(ctx context.Context) error {
 
 func (wc *wrappedConn) Query(query string, args []driver.Value) (driver.Rows, error) {
 	return measureQuery(wc.segment, query, args, nil, func() (driver.Rows, error) {
+		//nolint:staticcheck
 		return wc.Conn.(driver.Queryer).Query(query, args)
 	})
 }
@@ -156,6 +158,7 @@ func wrapStmt(stmt driver.Stmt, segment *measureSegment, query string) driver.St
 }
 
 func (ws *wrappedStmt) ColumnConverter(idx int) driver.ValueConverter {
+	//nolint:staticcheck
 	return ws.Stmt.(driver.ColumnConverter).ColumnConverter(idx)
 }
 
@@ -165,12 +168,14 @@ func (ws *wrappedStmt) CheckNamedValue(v *driver.NamedValue) error {
 
 func (ws *wrappedStmt) Exec(args []driver.Value) (driver.Result, error) {
 	return measureQuery(ws.segment, ws.query, args, nil, func() (driver.Result, error) {
+		//nolint:staticcheck
 		return ws.Stmt.Exec(args)
 	})
 }
 
 func (ws *wrappedStmt) Query(args []driver.Value) (driver.Rows, error) {
 	return measureQuery(ws.segment, ws.query, args, nil, func() (driver.Rows, error) {
+		//nolint:staticcheck
 		return ws.Stmt.Query(args)
 	})
 }
