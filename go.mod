@@ -8,7 +8,7 @@ require (
 	github.com/grafana/pyroscope v1.12.0
 	github.com/grafana/pyroscope-go v1.2.0
 	github.com/grafana/pyroscope/api v1.2.0
-	github.com/prometheus/client_golang v1.20.5
+	github.com/prometheus/client_golang v1.21.0
 	github.com/stretchr/testify v1.10.0
 	github.com/valyala/fasthttp v1.59.0
 	golang.org/x/tools v0.29.0
@@ -77,9 +77,9 @@ require (
 	github.com/mazrean/iwrapper v1.0.4
 	github.com/motoki317/sc v1.8.1
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 	golang.org/x/sys v0.30.0 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/protobuf v1.36.1 // indirect
 )
