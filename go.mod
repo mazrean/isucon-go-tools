@@ -1,15 +1,15 @@
 module github.com/mazrean/isucon-go-tools/v2
 
-go 1.24.0
+go 1.24.6
 
 require (
-	connectrpc.com/connect v1.18.1
+	connectrpc.com/connect v1.19.1
 	github.com/gostaticanalysis/analysisutil v0.7.1
-	github.com/grafana/pyroscope v1.15.0
+	github.com/grafana/pyroscope v1.17.0
 	github.com/grafana/pyroscope-go v1.2.7
 	github.com/grafana/pyroscope/api v1.2.0
-	github.com/prometheus/client_golang v1.22.0
-	github.com/stretchr/testify v1.10.0
+	github.com/prometheus/client_golang v1.23.2
+	github.com/stretchr/testify v1.11.1
 	github.com/valyala/fasthttp v1.68.0
 	golang.org/x/tools v0.40.0
 )
@@ -29,7 +29,7 @@ require (
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/google/pprof v0.0.0-20250607225305-033d6d78b36a // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -52,6 +52,7 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
+	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/mod v0.31.0 // indirect
@@ -59,8 +60,8 @@ require (
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250825161204-c5933d9347a5 // indirect
-	google.golang.org/grpc v1.75.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
+	google.golang.org/grpc v1.76.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
@@ -78,9 +79,9 @@ require (
 	github.com/mazrean/iwrapper v1.0.4
 	github.com/motoki317/sc v1.8.2
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.65.0 // indirect
+	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/sys v0.39.0 // indirect
-	google.golang.org/protobuf v1.36.8 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 )
