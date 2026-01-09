@@ -75,7 +75,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/lib/pq v1.10.9
-	github.com/mattn/go-sqlite3 v1.14.24
+	github.com/mattn/go-sqlite3 v1.14.33
 	github.com/mazrean/iwrapper v1.0.4
 	github.com/motoki317/sc v1.8.2
 	github.com/prometheus/client_model v0.6.2 // indirect
