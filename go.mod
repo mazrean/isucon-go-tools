@@ -5,7 +5,7 @@ go 1.25.7
 require (
 	connectrpc.com/connect v1.19.1
 	github.com/gostaticanalysis/analysisutil v0.7.1
-	github.com/grafana/pyroscope v1.20.3
+	github.com/grafana/pyroscope v1.21.1
 	github.com/grafana/pyroscope-go v1.2.8
 	github.com/grafana/pyroscope/api v1.4.0
 	github.com/prometheus/client_golang v1.23.2
@@ -30,7 +30,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/google/gnostic v0.7.1 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20260202012954-cb029daf43ef // indirect
+	github.com/google/pprof v0.0.0-20260302011040-a15ffb7f9dcc // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.3 // indirect
+	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/crypto v0.51.0 // indirect
