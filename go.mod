@@ -3,7 +3,7 @@ module github.com/mazrean/isucon-go-tools/v2
 go 1.25.7
 
 require (
-	connectrpc.com/connect v1.19.1
+	connectrpc.com/connect v1.20.0
 	github.com/gostaticanalysis/analysisutil v0.7.1
 	github.com/grafana/pyroscope v1.21.1
 	github.com/grafana/pyroscope-go v1.3.0
