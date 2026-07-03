@@ -15,7 +15,7 @@ require (
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
+	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/andybalholm/brotli v1.2.1 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/felixge/fgprof v0.9.5
 	github.com/gin-gonic/gin v1.12.0
-	github.com/go-sql-driver/mysql v1.9.3
+	github.com/go-sql-driver/mysql v1.10.0
 	github.com/goccy/go-json v0.10.6
 	github.com/gofiber/fiber/v2 v2.52.12
 	github.com/labstack/echo/v4 v4.15.2
