@@ -76,7 +76,7 @@ require (
 	github.com/felixge/fgprof v0.9.5
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-sql-driver/mysql v1.10.0
-	github.com/goccy/go-json v0.10.6
+	github.com/goccy/go-json v0.11.1
 	github.com/gofiber/fiber/v2 v2.52.13
 	github.com/labstack/echo/v4 v4.15.4
 	github.com/lib/pq v1.12.3
