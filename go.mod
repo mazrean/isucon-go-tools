@@ -78,7 +78,7 @@ require (
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/goccy/go-json v0.10.6
 	github.com/gofiber/fiber/v2 v2.52.13
-	github.com/labstack/echo/v4 v4.15.4
+	github.com/labstack/echo/v4 v4.16.0
 	github.com/lib/pq v1.12.3
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/mazrean/iwrapper v1.0.4
